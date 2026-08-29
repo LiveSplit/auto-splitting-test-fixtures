@@ -23,7 +23,7 @@ Engines separate by data, not structure: the tag prefix, the asset names, and th
 
 ## Building
 
-- [`Unity`](tools/unity)
+- [`Unity`](tools/unity/build)
 
 ## Licensing
 
