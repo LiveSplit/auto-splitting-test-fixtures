@@ -8,4 +8,4 @@ publish = false
 clap = { version = "4", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 sha2 = "0.10"
-zip = "2"
+zip = { version = "2", default-features = false, features = ["deflate"] }
