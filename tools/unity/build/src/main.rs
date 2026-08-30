@@ -105,8 +105,8 @@ fn walk(root: &Path, at: &str, into: &mut Vec<(String, PathBuf)>) {
 }
 
 /// Zips the files at their in-build relative paths, answering the archive's
-/// size and digest, and each file's own digest, so identical builds stay
-/// comparable file by file even though the archive's bytes never repeat.
+/// size and digest, and each file's own digest. The same files give the same
+/// archive on any machine.
 fn archive(files: &[(String, PathBuf)], asset: &Path) -> (u64, String, Vec<serde_json::Value>) {
     let mut zip = ZipWriter::new(fs::File::create(asset).expect("creating the asset"));
     let mut entries = Vec::new();
@@ -324,6 +324,8 @@ fn main() {
             ));
         }
 
+        // We leave the log out of the asset because it names the machine that
+        // ran the build and when.
         let mut files = binaries;
         files.extend(
             built
@@ -331,7 +333,6 @@ fn main() {
                 .filter(|(relative, _)| wanted_symbols(backend, &last(relative)))
                 .cloned(),
         );
-        files.push(("build.log".to_string(), log));
 
         let asset = workspace.join(format!("unity-{version}-{name}.zip"));
         let (size, digest, names) = archive(&files, &asset);
