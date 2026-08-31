@@ -1261,6 +1261,160 @@
                     "sha256": "3255e334e04d506c3da7c55ad7e3a6b05c40607bcf08516b7308dc57bed728bd"
                 }
             ]
+        },
+        {
+            "engine": "unity",
+            "version": "6000.3.21f1",
+            "variant": "linux-x64-il2cpp",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-6000.3.21f1/unity-6000.3.21f1-linux-x64-il2cpp.zip",
+            "size": 53244610,
+            "sha256": "10e0a1082ac38befd68b25d4485ff5be4d8d95172a9308e2c3be2d8095b552d1",
+            "files": [
+                {
+                    "path": "GameAssembly.so",
+                    "sha256": "324fac16f1b2e3c3f6814572d3e5338d945357b592d9cefd129c2ffd090fcf47"
+                },
+                {
+                    "path": "UnityPlayer.so",
+                    "sha256": "d0d079bcc740c5f6225d9cbf7f2a32027ebc56006a09e5ae6027ea41a3d51c15"
+                },
+                {
+                    "path": "fixture_Data/il2cpp_data/Metadata/global-metadata.dat",
+                    "sha256": "31a23cdc67a62519cd2278fe7b810081a54c73765d3231e786b09bac4029d5e9"
+                },
+                {
+                    "path": "fixture_BackUpThisFolder_ButDontShipItWithYourGame/GameAssembly.debug",
+                    "sha256": "e78470f0a93efaec00006957a104a210b0dd510d680cb4fef967ee586ac53d13"
+                },
+                {
+                    "path": "fixture_BackUpThisFolder_ButDontShipItWithYourGame/UnityPlayer_s.debug",
+                    "sha256": "a083c37a54b6e7ab464c617ebf3cee9e2103c4666e60ff1acf787f7825aff839"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "6000.3.21f1",
+            "variant": "linux-x64-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-6000.3.21f1/unity-6000.3.21f1-linux-x64-mono.zip",
+            "size": 18486039,
+            "sha256": "5da25f63e8fd605ca0865c75c41b1695bd96d751ff19f904ab7a88d8fd28d44c",
+            "files": [
+                {
+                    "path": "UnityPlayer.so",
+                    "sha256": "a0cf6b17d6126bb1a1935b981c3f665ddaddcb0141488ea79ec63eb24bfb50dc"
+                },
+                {
+                    "path": "fixture_Data/MonoBleedingEdge/x86_64/libmonobdwgc-2.0.so",
+                    "sha256": "ef78998d272456345b025b41c71bd3fd294da19d963e68f1a1e00c907eacb20b"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "6000.3.21f1",
+            "variant": "mac-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-6000.3.21f1/unity-6000.3.21f1-mac-mono.zip",
+            "size": 30638082,
+            "sha256": "8cf4aa83ca7f812983646c44e6e1b9740ee4b74aa6458a8c0de6d89caca236ad",
+            "files": [
+                {
+                    "path": "fixture.app/Contents/Frameworks/UnityPlayer.dylib",
+                    "sha256": "f54f57b197c3e52e92e00f7e789c31ff05a55f2e4394a5386c3297d0daa70b56"
+                },
+                {
+                    "path": "fixture.app/Contents/Frameworks/libmonobdwgc-2.0.dylib",
+                    "sha256": "a35e5a1c3cfa5751c93daeb6500521d0624c16fd95e258d11e480d0797eeb818"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "6000.3.21f1",
+            "variant": "win-x64-il2cpp",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-6000.3.21f1/unity-6000.3.21f1-win-x64-il2cpp.zip",
+            "size": 46606161,
+            "sha256": "a11c0c479817be736c876b4b59153752e59006aa6a2f87a3f44c8a93993c28b6",
+            "files": [
+                {
+                    "path": "GameAssembly.dll",
+                    "sha256": "7511863519a9e3bd3d49fa75c2066396355a3daf1bda09ce0e75f11d589c7712"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "5158c9f49db8ce4ed77a5bf10d0ad0faee7a9f246ec9a9c97e7cb9ae1cccec1d"
+                },
+                {
+                    "path": "fixture_Data/il2cpp_data/Metadata/global-metadata.dat",
+                    "sha256": "41b511c9098f31dc14822589f90f21e0cc08e211c8c49547b4f06e4fe15f436a"
+                },
+                {
+                    "path": "fixture_BackUpThisFolder_ButDontShipItWithYourGame/GameAssembly.pdb",
+                    "sha256": "eeb8515752f0a096c8ac10549f7a6c91455dea3981b90773361386069b36d5df"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "6000.3.21f1",
+            "variant": "win-x64-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-6000.3.21f1/unity-6000.3.21f1-win-x64-mono.zip",
+            "size": 19157574,
+            "sha256": "92866e6a076224c969bf97044d2abca5f3540b5ffd73a7bf286f104c1dde330c",
+            "files": [
+                {
+                    "path": "MonoBleedingEdge/EmbedRuntime/mono-2.0-bdwgc.dll",
+                    "sha256": "872a64a28333d54346f5e38d8420ff40e50769dc546b241ede1889531b6a9150"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "35f489b6a7753d536ce2e7b1bd1f729afb8b4e70b43caaa01af03d1c20f64d6c"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "6000.3.21f1",
+            "variant": "win-x86-il2cpp",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-6000.3.21f1/unity-6000.3.21f1-win-x86-il2cpp.zip",
+            "size": 41867004,
+            "sha256": "6c9866cc9c848e0a2739cb3d2a3a91e3a31fb70e55dcbbae0341e37616cf3f2b",
+            "files": [
+                {
+                    "path": "GameAssembly.dll",
+                    "sha256": "d4e7047fd25545c74c9cf1b0be3435ff2a160ecf43476e4f8ac2d4f14b36aecb"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "bb05f9bd7fb83346c12fedd8b6538a03fed09a76d26ee6e09afbeef8753b2cd5"
+                },
+                {
+                    "path": "fixture_Data/il2cpp_data/Metadata/global-metadata.dat",
+                    "sha256": "41b511c9098f31dc14822589f90f21e0cc08e211c8c49547b4f06e4fe15f436a"
+                },
+                {
+                    "path": "fixture_BackUpThisFolder_ButDontShipItWithYourGame/GameAssembly.pdb",
+                    "sha256": "bbbda4acdf922bf3c92c6aa43d1ce6954a6e03c30247549a06eb504015233550"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "6000.3.21f1",
+            "variant": "win-x86-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-6000.3.21f1/unity-6000.3.21f1-win-x86-mono.zip",
+            "size": 14416680,
+            "sha256": "d275ab1d5dbc0a290aa2cc51ff9d1c52349bc0842462204e4cd686c760e786a7",
+            "files": [
+                {
+                    "path": "MonoBleedingEdge/EmbedRuntime/mono-2.0-bdwgc.dll",
+                    "sha256": "443d0e4a8b72465a3e38c7ed6442c39ccb716ebc6d1fda72f5797b25a722eb19"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "595d163be884409529ca2ef693fc4bf43cd45a5402bdfe92ea9808b25f1b1eef"
+                }
+            ]
         }
     ]
 }
