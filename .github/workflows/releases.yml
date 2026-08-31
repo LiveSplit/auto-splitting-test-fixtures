@@ -1,0 +1,138 @@
+name: Releases
+
+on:
+  push:
+    branches: [main]
+    paths: [manifest.json]
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Check this release instead of drafting missing ones
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  # The manifest says which releases exist. A version added to it gets a draft
+  # to upload into, because the assets are built by hand and a published
+  # release with nothing in it is worse than no release at all.
+  reconcile:
+    if: github.event_name != 'release' && !inputs.tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Draft a release for every version the manifest names
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          while read -r engine version; do
+            tag="$engine-$version"
+            title="${engine^} $version"
+            if ! gh release view "$tag" >/dev/null 2>&1; then
+              echo "draft $tag"
+              gh release create "$tag" --draft --title "$title" --notes ""
+            elif [ "$(gh release view "$tag" --json name --jq .name)" != "$title" ]; then
+              echo "retitle $tag"
+              gh release edit "$tag" --title "$title"
+            else
+              echo "have $tag"
+            fi
+          done < <(jq -r '.fixtures[] | "\(.engine) \(.version)"' manifest.json | sort -u)
+
+  # Assets reach a release by hand, so this is where they get checked: the
+  # release holds what the manifest says it does, and every byte matches.
+  confirm:
+    if: github.event_name == 'release' || inputs.tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the release against the manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag || github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+
+          engine="${TAG%%-*}"
+          version="${TAG#*-}"
+          echo "checking $engine $version"
+
+          entries=$(jq -c --arg e "$engine" --arg v "$version" \
+            '[.fixtures[] | select(.engine == $e and .version == $v)]' manifest.json)
+          count=$(jq length <<<"$entries")
+          if [ "$count" -eq 0 ]; then
+            echo "::error::$TAG has no entries in manifest.json"
+            exit 1
+          fi
+
+          # An entry has to point at this release. Matching only the file name
+          # would let an entry name the right asset on the wrong tag.
+          while read -r url; do
+            case "$url" in
+              */releases/download/"$TAG"/*) ;;
+              *) echo "::error::$url does not point at $TAG"; exit 1 ;;
+            esac
+          done < <(jq -r '.[].asset' <<<"$entries")
+
+          # An extra asset is as wrong as a missing one, since consumers read
+          # the manifest and would never know it was there.
+          gh release view "$TAG" --json assets --jq '.assets[].name' | sort > released.txt
+          jq -r '.[].asset' <<<"$entries" | sed 's|.*/||' | sort > expected.txt
+          if ! diff -u expected.txt released.txt; then
+            echo "::error::$TAG holds different assets than manifest.json names"
+            exit 1
+          fi
+
+          mkdir -p work
+          for i in $(seq 0 $((count - 1))); do
+            entry=$(jq -c ".[$i]" <<<"$entries")
+            name=$(jq -r '.asset' <<<"$entry" | sed 's|.*/||')
+            echo "--- $name"
+
+            gh release download "$TAG" --pattern "$name" --dir work --clobber
+
+            size=$(stat -c %s "work/$name")
+            want=$(jq -r '.size' <<<"$entry")
+            if [ "$size" != "$want" ]; then
+              echo "::error::$name is $size bytes, manifest says $want"
+              exit 1
+            fi
+
+            sum=$(sha256sum "work/$name" | cut -d' ' -f1)
+            want=$(jq -r '.sha256' <<<"$entry")
+            if [ "$sum" != "$want" ]; then
+              echo "::error::$name hashes $sum, manifest says $want"
+              exit 1
+            fi
+
+            # Every file the entry lists, at the path it lists, hashing what it
+            # says. Anything else in the archive means the manifest describes a
+            # different build.
+            rm -rf work/unpacked
+            mkdir work/unpacked
+            unzip -q "work/$name" -d work/unpacked
+            (cd work/unpacked && find . -type f | sed 's|^\./||' | sort) > held.txt
+            jq -r '.files[].path' <<<"$entry" | sort > listed.txt
+            if ! diff -u listed.txt held.txt; then
+              echo "::error::$name holds different files than manifest.json lists"
+              exit 1
+            fi
+
+            jq -r '.files[] | "\(.sha256)  \(.path)"' <<<"$entry" > sums.txt
+            if ! (cd work/unpacked && sha256sum -c --quiet "$GITHUB_WORKSPACE/sums.txt"); then
+              echo "::error::a file inside $name does not hash to what manifest.json says"
+              exit 1
+            fi
+
+            rm -f "work/$name"
+          done
+
+          echo "$count assets check out"
