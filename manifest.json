@@ -267,6 +267,134 @@
                     "sha256": "ef5a91ca715dbca3fffa1122b4243d4f15bf8493765d8d389b8e496a26d94aca"
                 }
             ]
+        },
+        {
+            "engine": "unity",
+            "version": "2019.4.41f2",
+            "variant": "linux-x64-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2019.4.41f2/unity-2019.4.41f2-linux-x64-mono.zip",
+            "size": 16480632,
+            "sha256": "3afb34c9079077bf0881351d9396f70e44a07bb34e2a3a73d29bdee0fb8ec7fe",
+            "files": [
+                {
+                    "path": "UnityPlayer.so",
+                    "sha256": "53b0b8d1d21031c097721b1bf10bf8cd23c34663f871d606e28bd276bd171c28"
+                },
+                {
+                    "path": "fixture_Data/MonoBleedingEdge/x86_64/libmonobdwgc-2.0.so",
+                    "sha256": "8324f568b00dd9d26214c2793a3dbd8213e8d34ea920c7b77e6a61f64371e521"
+                },
+                {
+                    "path": "UnityPlayer_s.debug",
+                    "sha256": "1cf5e1e7e17c998dd16de692c79d3a91281b5f4bd37f82b2fe3007995d905519"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "2019.4.41f2",
+            "variant": "mac-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2019.4.41f2/unity-2019.4.41f2-mac-mono.zip",
+            "size": 12964136,
+            "sha256": "f9d789840c1b672b2e02d03609555a1f573f3295a0bbb56a47d7a2ffc163aaf5",
+            "files": [
+                {
+                    "path": "fixture.app/Contents/Frameworks/UnityPlayer.dylib",
+                    "sha256": "0dea3b205d5f71d56e29d2b38867cb9418683da77ddda5e6f7930ec9c6820bae"
+                },
+                {
+                    "path": "fixture.app/Contents/Frameworks/libmonobdwgc-2.0.dylib",
+                    "sha256": "46f3806a44a88ada04950ab6f7392074d7650d10531f329d8f8ceaa16723200e"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "2019.4.41f2",
+            "variant": "win-x64-il2cpp",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2019.4.41f2/unity-2019.4.41f2-win-x64-il2cpp.zip",
+            "size": 36691630,
+            "sha256": "bb129946e7e4118ce306ad132931c0989170a48be3ca37d2ab48adeb825b27e6",
+            "files": [
+                {
+                    "path": "GameAssembly.dll",
+                    "sha256": "26a04842f4ccd88e81d6d441b01fd96f20e1a8e34541d712f811acd12c3e1ca4"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "e3cf045fd2b95e510dfc324e00a9c3f5a5f92d081f14e0c340a934d05f97767e"
+                },
+                {
+                    "path": "fixture_Data/il2cpp_data/Metadata/global-metadata.dat",
+                    "sha256": "969ee2f9c592402af308f4684a98e606b2a8b254240241061918f92dfdc0e036"
+                },
+                {
+                    "path": "fixture_BackUpThisFolder_ButDontShipItWithYourGame/GameAssembly.pdb",
+                    "sha256": "2317310e1fa76519b414ca0dc70100459c678709fa28a7c9dde492cfb80438a9"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "2019.4.41f2",
+            "variant": "win-x64-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2019.4.41f2/unity-2019.4.41f2-win-x64-mono.zip",
+            "size": 13715209,
+            "sha256": "c0c3bad4e88f5a47ef731fc342075236804ed2fd6eb3748fbd8c5c86b9ba14b8",
+            "files": [
+                {
+                    "path": "MonoBleedingEdge/EmbedRuntime/mono-2.0-bdwgc.dll",
+                    "sha256": "a77bf07facb9f031799f88523b56da8e38c1198a0079f8b8803d4a1b4cff4221"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "7eeb289e66523de9db1d6a5cad5bfd8b8e82b1647d71ca95e4b42b469dd106d7"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "2019.4.41f2",
+            "variant": "win-x86-il2cpp",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2019.4.41f2/unity-2019.4.41f2-win-x86-il2cpp.zip",
+            "size": 33639184,
+            "sha256": "e5b96db0839c625ef4e88c96f61b251cd873684dd6bfa04c37b9717a477461ab",
+            "files": [
+                {
+                    "path": "GameAssembly.dll",
+                    "sha256": "3c5f78fabf568c91156502abb147df141c323af4292d901289cea26f260a93c4"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "44a04031b1d4926672f836504e8fbf8d20935183a13877922c25a38616ef2934"
+                },
+                {
+                    "path": "fixture_Data/il2cpp_data/Metadata/global-metadata.dat",
+                    "sha256": "969ee2f9c592402af308f4684a98e606b2a8b254240241061918f92dfdc0e036"
+                },
+                {
+                    "path": "fixture_BackUpThisFolder_ButDontShipItWithYourGame/GameAssembly.pdb",
+                    "sha256": "90841847946174de99ccb2c67ab80d71dc6571d9d6374838073f97e1e81cc4c9"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "2019.4.41f2",
+            "variant": "win-x86-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2019.4.41f2/unity-2019.4.41f2-win-x86-mono.zip",
+            "size": 10836728,
+            "sha256": "86e6804959ea070a511c73c0c5de872ed8693f019591aef17ba29744557aaf2e",
+            "files": [
+                {
+                    "path": "MonoBleedingEdge/EmbedRuntime/mono-2.0-bdwgc.dll",
+                    "sha256": "c0a3dc6c66bd7cecfd9b8ad6dc0f385652ed12498050f04cd4fd3dc2bfe5ae1a"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "1e38f541a14ebf4f1e4457baeb2c88a7d8e27c5d30655f4f6e0cbd61489e4275"
+                }
+            ]
         }
     ]
 }
