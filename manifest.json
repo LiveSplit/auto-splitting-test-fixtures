@@ -395,6 +395,112 @@
                     "sha256": "1e38f541a14ebf4f1e4457baeb2c88a7d8e27c5d30655f4f6e0cbd61489e4275"
                 }
             ]
+        },
+        {
+            "engine": "unity",
+            "version": "2020.1.18f1",
+            "variant": "mac-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2020.1.18f1/unity-2020.1.18f1-mac-mono.zip",
+            "size": 13257709,
+            "sha256": "ffa1538c8cba9e0ebd7ca543be212eadfaf62de28216dcb3d85ff544fc63e793",
+            "files": [
+                {
+                    "path": "fixture.app/Contents/Frameworks/UnityPlayer.dylib",
+                    "sha256": "c570fda3916e9aa768a620aa58c5add778329c106a1e26c015c131e4e1e86074"
+                },
+                {
+                    "path": "fixture.app/Contents/Frameworks/libmonobdwgc-2.0.dylib",
+                    "sha256": "68727b3676cc04f2f7b1c925c0c60ed1c8630d8f7eb438bfcaed55513d1dfcd5"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "2020.1.18f1",
+            "variant": "win-x64-il2cpp",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2020.1.18f1/unity-2020.1.18f1-win-x64-il2cpp.zip",
+            "size": 34041406,
+            "sha256": "94fed889884b845aa3a96a0f9d2a48a2346bd205a1e397872e94d165acb281be",
+            "files": [
+                {
+                    "path": "GameAssembly.dll",
+                    "sha256": "2fb1701ef761bf3b321594b5451c8a44382cf8bbc6440f61c5f915a5e3cb6d22"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "c5a1749d5e1f66f4019e62f1be9bad82996c2179e1ca855cbe1d587f2ee9f3ad"
+                },
+                {
+                    "path": "fixture_Data/il2cpp_data/Metadata/global-metadata.dat",
+                    "sha256": "840b1439fa21e048cde78c6f4b6bb60c623b8b9e80abe2309209cb28e2484b28"
+                },
+                {
+                    "path": "fixture_BackUpThisFolder_ButDontShipItWithYourGame/GameAssembly.pdb",
+                    "sha256": "a86c39fe93e0ffa075bbcc2a4a2489bc6ac64ad2e42382fc231c101cdb977a9d"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "2020.1.18f1",
+            "variant": "win-x64-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2020.1.18f1/unity-2020.1.18f1-win-x64-mono.zip",
+            "size": 14051592,
+            "sha256": "f1d29d6d482100f3f73b43655347d328d5049c0b5bf4a89356472662b17b2bb7",
+            "files": [
+                {
+                    "path": "MonoBleedingEdge/EmbedRuntime/mono-2.0-bdwgc.dll",
+                    "sha256": "d0981e2d71644b42ebef5cb110820d4ff7579f16fcec4a1454d33c89102b2ff0"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "60da3f8718f7815a222007bbac024f4a6ddf3309ed20f10205bb8a02be30f338"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "2020.1.18f1",
+            "variant": "win-x86-il2cpp",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2020.1.18f1/unity-2020.1.18f1-win-x86-il2cpp.zip",
+            "size": 30980004,
+            "sha256": "ea5adf5620f06f342dc8d406f2fdb4c65d35e0d8a9b62f3c9d8def6142996b06",
+            "files": [
+                {
+                    "path": "GameAssembly.dll",
+                    "sha256": "fbf5d88a7c6b958a9b645a04c62b12475e741d790ad3568fe4fff48b535d5bf6"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "ee956fae106f6902256d64c6b2c01b93077992f7ffc3df0f8f719f667bc50778"
+                },
+                {
+                    "path": "fixture_Data/il2cpp_data/Metadata/global-metadata.dat",
+                    "sha256": "840b1439fa21e048cde78c6f4b6bb60c623b8b9e80abe2309209cb28e2484b28"
+                },
+                {
+                    "path": "fixture_BackUpThisFolder_ButDontShipItWithYourGame/GameAssembly.pdb",
+                    "sha256": "62679210eed4d25ec0bd50b31907ba89e52b2bebc5b433c9fac362917eb522d2"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "2020.1.18f1",
+            "variant": "win-x86-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2020.1.18f1/unity-2020.1.18f1-win-x86-mono.zip",
+            "size": 11130039,
+            "sha256": "29e3b739a178635e78be58f4eb3568f28f156203d82b83e3e10c3f2c90dcd801",
+            "files": [
+                {
+                    "path": "MonoBleedingEdge/EmbedRuntime/mono-2.0-bdwgc.dll",
+                    "sha256": "3cdef443698944a65fede630a2907087185a6be71f36b77c04feac5caf7b7446"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "34c898fce61d53506d9be4ecad56f6624f517048d926fd247021a494f02c9860"
+                }
+            ]
         }
     ]
 }
