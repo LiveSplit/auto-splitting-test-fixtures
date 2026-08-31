@@ -1,3 +1,76 @@
 {
-    "fixtures": []
+    "fixtures": [
+        {
+            "engine": "unity",
+            "version": "5.6.7f1",
+            "variant": "linux-x64-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-5.6.7f1/unity-5.6.7f1-linux-x64-mono.zip",
+            "size": 14221238,
+            "sha256": "fd06bd9b481286ab722bfea7123793db0d0df8298f5fd82fffbd798011838600",
+            "files": [
+                {
+                    "path": "fixture_Data/Mono/x86_64/libmono.so",
+                    "sha256": "4cfea7a0d01dcaec3ca23380106a109f6a97659302675388fc06aa42ec7252b2"
+                },
+                {
+                    "path": "fixture",
+                    "sha256": "a18607b230f20b5653379a8debb6d5fe69e3ccd45863798f2e2a5ec403b8a9ca"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "5.6.7f1",
+            "variant": "mac-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-5.6.7f1/unity-5.6.7f1-mac-mono.zip",
+            "size": 25692636,
+            "sha256": "370b82063f7c3df056f64c45eda9f4136a859c598e0235176c3bb4245dd4458e",
+            "files": [
+                {
+                    "path": "fixture.app/Contents/Frameworks/MonoEmbedRuntime/osx/libmono.0.dylib",
+                    "sha256": "3c41f6f88536604af3faaca4f59e7a66bd3ec2a4702a6325231150c701e16b8a"
+                },
+                {
+                    "path": "fixture.app/Contents/MacOS/fixture",
+                    "sha256": "0108de45fd4a6ff13ea1753b724e4a97db06f50d1cda709d839b73ae628413bf"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "5.6.7f1",
+            "variant": "win-x64-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-5.6.7f1/unity-5.6.7f1-win-x64-mono.zip",
+            "size": 10982323,
+            "sha256": "c3344c7f3bfb4bd2c2336685a466b7b7ed0d1ff0627269ae9504e7c2d3fe10c4",
+            "files": [
+                {
+                    "path": "fixture_Data/Mono/mono.dll",
+                    "sha256": "bd7220882de40904bb6081540427937b06602ef6d4309d2b311f2cf74be2b076"
+                },
+                {
+                    "path": "fixture.exe",
+                    "sha256": "43c4754e888869942f65c1d14d7b07ea1634cb00002a569092fed6471e34f558"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "5.6.7f1",
+            "variant": "win-x86-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-5.6.7f1/unity-5.6.7f1-win-x86-mono.zip",
+            "size": 8968773,
+            "sha256": "6887712fe98bd56a6cf6b151c9ce84da517cc91c01204335dcb75a141837b4c8",
+            "files": [
+                {
+                    "path": "fixture_Data/Mono/mono.dll",
+                    "sha256": "4381ef7c38dd19a0cd443b88d31996ff28fab7d42d76ee1ce161ac75bd91aea3"
+                },
+                {
+                    "path": "fixture.exe",
+                    "sha256": "0ce27f046b7bc7cc04c584935ab257348280e6ce088d691846bfe112667d458e"
+                }
+            ]
+        }
+    ]
 }
