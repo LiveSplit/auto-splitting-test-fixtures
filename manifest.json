@@ -143,6 +143,130 @@
                     "sha256": "106d3d4ef1602b54af6f952715787cc1e0a0ee0b955ea6dc755a7aeb3e2bee61"
                 }
             ]
+        },
+        {
+            "engine": "unity",
+            "version": "2018.4.36f1",
+            "variant": "linux-x64-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2018.4.36f1/unity-2018.4.36f1-linux-x64-mono.zip",
+            "size": 13366533,
+            "sha256": "1197aa5b8490f0ed79cb30ad09f3cb0bf868c64b8b8a26627223136edd5332e0",
+            "files": [
+                {
+                    "path": "fixture_Data/MonoBleedingEdge/x86_64/libmonobdwgc-2.0.so",
+                    "sha256": "3541e1bdbd55c93bb210bc6c40ceda5e48005a05352a0119f652a018c494ba98"
+                },
+                {
+                    "path": "fixture",
+                    "sha256": "3f5b7be51988afff23c58bbffc4221ed261a2df8f5fd767ed3148d3078f04d73"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "2018.4.36f1",
+            "variant": "mac-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2018.4.36f1/unity-2018.4.36f1-mac-mono.zip",
+            "size": 11761451,
+            "sha256": "e70ad827b7e9bb24bf3f4c8caf22be4cf600b41b0d8da06147bf6d36783416a1",
+            "files": [
+                {
+                    "path": "fixture.app/Contents/Frameworks/MonoBleedingEdge/MonoEmbedRuntime/osx/libmonobdwgc-2.0.dylib",
+                    "sha256": "70be30808925cd60d9959a7535125574d81ed0d49022cae4987add446e10cd98"
+                },
+                {
+                    "path": "fixture.app/Contents/Frameworks/UnityPlayer.dylib",
+                    "sha256": "05517319bef186430d8ef4a51c0f1f57e1cce348b499d6ce9ec9bc6935b347d5"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "2018.4.36f1",
+            "variant": "win-x64-il2cpp",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2018.4.36f1/unity-2018.4.36f1-win-x64-il2cpp.zip",
+            "size": 34680517,
+            "sha256": "9f1601d11a0d4cd4ce0e1368f2c25c81b538d41be417d9c8b7ef329d7d51bf38",
+            "files": [
+                {
+                    "path": "GameAssembly.dll",
+                    "sha256": "f91e65377a5d3b1a46445dc463aeacc5f1eecb8062a4139b7f4b08b4d51ef637"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "47140baa833f525ee62d689237e4e0d544cb5da9a74bcfda5b2d59b6c76a1f2f"
+                },
+                {
+                    "path": "fixture_Data/il2cpp_data/Metadata/global-metadata.dat",
+                    "sha256": "604b050f6d67bb0eb0e648cfb1b84e6e0ca84fcaf56711cbaa6bb0e671314076"
+                },
+                {
+                    "path": "fixture_BackUpThisFolder_ButDontShipItWithYourGame/GameAssembly.pdb",
+                    "sha256": "178753d966006ca071a49f0440a61e6c893df254cdc2417679b3c3c958376c9a"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "2018.4.36f1",
+            "variant": "win-x64-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2018.4.36f1/unity-2018.4.36f1-win-x64-mono.zip",
+            "size": 12435097,
+            "sha256": "b430f8052598aa191e8e96b097f676fb8e3e6118ebbcd35178f46f031723faf7",
+            "files": [
+                {
+                    "path": "MonoBleedingEdge/EmbedRuntime/mono-2.0-bdwgc.dll",
+                    "sha256": "0dc34c735a8d657c87476b85c38d963340958244b6b1e0d82b4b8c9e20290c58"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "97e7152e01b20db787f4dbb8c5ad3efb8061c9be6235d7625c63617f51933888"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "2018.4.36f1",
+            "variant": "win-x86-il2cpp",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2018.4.36f1/unity-2018.4.36f1-win-x86-il2cpp.zip",
+            "size": 31944882,
+            "sha256": "b26f4e48d659e2417356fde760edaf47547dbf1231a3e8db8ee42f832cc2160a",
+            "files": [
+                {
+                    "path": "GameAssembly.dll",
+                    "sha256": "426a2f8ab4459bc8d49c5ff80314f434a7cca231fbb46969276169aca4f3a20c"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "b7b5b4216067eccc088e4d9e100982843dea81e8faece763a22c2a7ec1a2b21a"
+                },
+                {
+                    "path": "fixture_Data/il2cpp_data/Metadata/global-metadata.dat",
+                    "sha256": "604b050f6d67bb0eb0e648cfb1b84e6e0ca84fcaf56711cbaa6bb0e671314076"
+                },
+                {
+                    "path": "fixture_BackUpThisFolder_ButDontShipItWithYourGame/GameAssembly.pdb",
+                    "sha256": "d57b9ce0e5635da89691f95990967f9c9b47e7003625ff1ef2275572e6bc2406"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "2018.4.36f1",
+            "variant": "win-x86-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2018.4.36f1/unity-2018.4.36f1-win-x86-mono.zip",
+            "size": 9886949,
+            "sha256": "0fad3877b02d5f63c7f8f7323f16fb71026f81fe36ca20e25f3810d8cfed5882",
+            "files": [
+                {
+                    "path": "MonoBleedingEdge/EmbedRuntime/mono-2.0-bdwgc.dll",
+                    "sha256": "cb9be38719f4fe7e9ea848af70d19cf3009472c7ebbb841f8a9398c9ef9f8c18"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "ef5a91ca715dbca3fffa1122b4243d4f15bf8493765d8d389b8e496a26d94aca"
+                }
+            ]
         }
     ]
 }
