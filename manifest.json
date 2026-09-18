@@ -270,6 +270,130 @@
         },
         {
             "engine": "unity",
+            "version": "2019.1.0f2",
+            "variant": "linux-x64-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2019.1.0f2/unity-2019.1.0f2-linux-x64-mono.zip",
+            "size": 13648771,
+            "sha256": "a05fd2263026c5d3d772254f34be8e2c4091fdfb90f999362dd463178b44fb0b",
+            "files": [
+                {
+                    "path": "fixture_Data/MonoBleedingEdge/x86_64/libmonobdwgc-2.0.so",
+                    "sha256": "04da796b004be958db2bc3d7b91cda183b0967cad38b3802a28fb16637153f1b"
+                },
+                {
+                    "path": "fixture",
+                    "sha256": "556d10fec2fc75065ca156a5a605788cef202313ae5b5f85b364c1dd9bd1ba03"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "2019.1.0f2",
+            "variant": "mac-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2019.1.0f2/unity-2019.1.0f2-mac-mono.zip",
+            "size": 11999423,
+            "sha256": "9e49bdea8462a23809e1c0a1ace22066601ea38a445a79352682020e98fc6301",
+            "files": [
+                {
+                    "path": "fixture.app/Contents/Frameworks/MonoBleedingEdge/MonoEmbedRuntime/osx/libmonobdwgc-2.0.dylib",
+                    "sha256": "4b094b74a056a987ba1fb0e0c8e8e00577682cfaf27007b86780c745ca6262a0"
+                },
+                {
+                    "path": "fixture.app/Contents/Frameworks/UnityPlayer.dylib",
+                    "sha256": "d92f8f168bdf716c780eb592b9d3afa8a8ca0a7fcd5ec4242d29c51e82f2c99a"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "2019.1.0f2",
+            "variant": "win-x64-il2cpp",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2019.1.0f2/unity-2019.1.0f2-win-x64-il2cpp.zip",
+            "size": 30762233,
+            "sha256": "d7ff97bc4ee56d9120a36629512e847a4aaf137dc46941165ad24bafe8af10a8",
+            "files": [
+                {
+                    "path": "GameAssembly.dll",
+                    "sha256": "a4242a5a10738e74b871ded8430466fadc65e25d16b6e36c649241debd4bb447"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "c82e77b9e69d7ccabe948e61b1cee87c20214241a83666d1714b1f1f1f048f04"
+                },
+                {
+                    "path": "fixture_Data/il2cpp_data/Metadata/global-metadata.dat",
+                    "sha256": "7ac3c163be14d6ced2c38dd22d9ca41237f84cc3ccefd09f456f99a6ba9d3b94"
+                },
+                {
+                    "path": "fixture_BackUpThisFolder_ButDontShipItWithYourGame/GameAssembly.pdb",
+                    "sha256": "801837197dda18c5ea80707091d4a4c046368ea05d110f63a6ab309c7c87502d"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "2019.1.0f2",
+            "variant": "win-x64-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2019.1.0f2/unity-2019.1.0f2-win-x64-mono.zip",
+            "size": 12616055,
+            "sha256": "4e39deb1665e2218a3b250233f4c09bd7951b585ea889f1bc31a3515f0844886",
+            "files": [
+                {
+                    "path": "MonoBleedingEdge/EmbedRuntime/mono-2.0-bdwgc.dll",
+                    "sha256": "353736f60f18f1940963e76139f0ba2d4f9c3b79b30258b8fb3d34bab6482b5c"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "7e84231e77654ed01fc089992ab777bd0226893bd93e555cf74fbc715886c0ab"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "2019.1.0f2",
+            "variant": "win-x86-il2cpp",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2019.1.0f2/unity-2019.1.0f2-win-x86-il2cpp.zip",
+            "size": 28083750,
+            "sha256": "4994cf54a100d6eeda6f3799248b728debf712b16976ffa1851447286dd046c0",
+            "files": [
+                {
+                    "path": "GameAssembly.dll",
+                    "sha256": "810d9b8bd47cb835df17a27d7eab77dc5b3ad463e47d1714b62bd143baebe6da"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "573b14cd0bc24b6fa48a5e21ca4123516c36e97588d8234b187dd00fb77dbbbd"
+                },
+                {
+                    "path": "fixture_Data/il2cpp_data/Metadata/global-metadata.dat",
+                    "sha256": "7ac3c163be14d6ced2c38dd22d9ca41237f84cc3ccefd09f456f99a6ba9d3b94"
+                },
+                {
+                    "path": "fixture_BackUpThisFolder_ButDontShipItWithYourGame/GameAssembly.pdb",
+                    "sha256": "ea0d0d4fcd02d85ca418f1a3ceb470beb0b7f131d6b84d3153371219dde7a5a0"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "2019.1.0f2",
+            "variant": "win-x86-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2019.1.0f2/unity-2019.1.0f2-win-x86-mono.zip",
+            "size": 10043665,
+            "sha256": "ca7c45b1ec0e3d670e816d7818b53bc50bbbbdc63e71a638441b6d1937bf79f3",
+            "files": [
+                {
+                    "path": "MonoBleedingEdge/EmbedRuntime/mono-2.0-bdwgc.dll",
+                    "sha256": "0df1da502a81b0f6eaee62fefb40b18a3c93f96ef92b5936ce67381c5efa63d1"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "ed2e16d3f935023c50bb205c1c0fdc116bc409400128a7ed816e4f0a4efe6e27"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
             "version": "2019.4.41f2",
             "variant": "linux-x64-mono",
             "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2019.4.41f2/unity-2019.4.41f2-linux-x64-mono.zip",
