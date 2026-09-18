@@ -628,6 +628,94 @@
         },
         {
             "engine": "unity",
+            "version": "2020.2.0f1",
+            "variant": "win-x64-il2cpp",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2020.2.0f1/unity-2020.2.0f1-win-x64-il2cpp.zip",
+            "size": 33719646,
+            "sha256": "0233b1880f0ed5bdef0363378b9136599f47412ee53d85dcfcecce5536354f5e",
+            "files": [
+                {
+                    "path": "GameAssembly.dll",
+                    "sha256": "35068cfb51bb954d4e5856da0ac7ddc05ba4e533f5717122fbb9b5d3936171ed"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "0b5ccb49210e47456e9a2cc1ee3d6a55ed1db047c5fcd2a1328e1f12f195fecd"
+                },
+                {
+                    "path": "fixture_Data/il2cpp_data/Metadata/global-metadata.dat",
+                    "sha256": "a0bb39b59b76135c703a2be255ac96829722a0c21a44a802c643cd391ac24c10"
+                },
+                {
+                    "path": "fixture_BackUpThisFolder_ButDontShipItWithYourGame/GameAssembly.pdb",
+                    "sha256": "d70583b3a0cf16903c32738018710b2ad60ee1eeeec66aa8985105c9d9473cec"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "2020.2.0f1",
+            "variant": "win-x64-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2020.2.0f1/unity-2020.2.0f1-win-x64-mono.zip",
+            "size": 14324010,
+            "sha256": "7d7dd1d1f2c322dc2bcf5d6d6174981a2b19959bd6f2e3ec28d27bbfc5d057e0",
+            "files": [
+                {
+                    "path": "MonoBleedingEdge/EmbedRuntime/mono-2.0-bdwgc.dll",
+                    "sha256": "faa3316b9cd8c1b795284730ea0efa48d68b9183897c2cf45305da9be95607e5"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "7d6c87c6e80f2260507c9c2f866cf761fad18b41ce8108b4821750e956ff9def"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "2020.2.0f1",
+            "variant": "win-x86-il2cpp",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2020.2.0f1/unity-2020.2.0f1-win-x86-il2cpp.zip",
+            "size": 30532099,
+            "sha256": "d5e951d65fa024fca2bd6aa6ebf8ea39d66525feca8021d50701429333bf477d",
+            "files": [
+                {
+                    "path": "GameAssembly.dll",
+                    "sha256": "65a6d627e4519b9159e3e97374dc13dc12413c71dea40b3eff02c1a8f8c9e826"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "0f558cf3e7b6ec165ea1606bcc98b235a8b44a45360ee0b2f070bfb2eb084c77"
+                },
+                {
+                    "path": "fixture_Data/il2cpp_data/Metadata/global-metadata.dat",
+                    "sha256": "a0bb39b59b76135c703a2be255ac96829722a0c21a44a802c643cd391ac24c10"
+                },
+                {
+                    "path": "fixture_BackUpThisFolder_ButDontShipItWithYourGame/GameAssembly.pdb",
+                    "sha256": "2026a712c0327f1fe417a03cdca8eb9314c46736f6d79827755760cfdc2715f7"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
+            "version": "2020.2.0f1",
+            "variant": "win-x86-mono",
+            "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2020.2.0f1/unity-2020.2.0f1-win-x86-mono.zip",
+            "size": 11301922,
+            "sha256": "c8ee1d44c3bebcd33eb7bc7ae322ea016c3faf191fd8228a8f1db3528cc30172",
+            "files": [
+                {
+                    "path": "MonoBleedingEdge/EmbedRuntime/mono-2.0-bdwgc.dll",
+                    "sha256": "ebb186178e287ceda16ae142f3ef1abe05e49734c478f1d1089d1296238edfd7"
+                },
+                {
+                    "path": "UnityPlayer.dll",
+                    "sha256": "629bf720304bb8c1747e12e3dad2a0ffffa2472cc53ef30d9186ffd4f51b5f36"
+                }
+            ]
+        },
+        {
+            "engine": "unity",
             "version": "2021.3.0f1",
             "variant": "linux-x64-mono",
             "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2021.3.0f1/unity-2021.3.0f1-linux-x64-mono.zip",
