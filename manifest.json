@@ -844,6 +844,78 @@
     },
     {
       "engine": "unity",
+      "version": "2021.2.20f1",
+      "variant": "linux-x64-mono",
+      "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2021.2.20f1/unity-2021.2.20f1-linux-x64-mono.zip",
+      "size": 15339743,
+      "sha256": "9a1760597104dc364540bea969f11af76edfbd5980043381995723f50add0fad",
+      "files": [
+        {
+          "path": "UnityPlayer.so",
+          "sha256": "4a30d65649eb9db9e388cf16087a54e338e49b402cf47f075c827ad05b42e1ad"
+        },
+        {
+          "path": "fixture_Data/MonoBleedingEdge/x86_64/libmonobdwgc-2.0.so",
+          "sha256": "88ce373aa52600057f5c375b56611a3d9428a03e62b25ff3b30c32d31aa27901"
+        }
+      ]
+    },
+    {
+      "engine": "unity",
+      "version": "2021.2.20f1",
+      "variant": "mac-mono",
+      "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2021.2.20f1/unity-2021.2.20f1-mac-mono.zip",
+      "size": 25312532,
+      "sha256": "8a978102869b2187596fde1d7487d52140f667d1f4a8332e213e1a75d2c97ee4",
+      "files": [
+        {
+          "path": "fixture.app/Contents/Frameworks/UnityPlayer.dylib",
+          "sha256": "bc8e9998b4199cad1905938de6eb3193526ddac4391cdbc8d9aa999e91c70aa1"
+        },
+        {
+          "path": "fixture.app/Contents/Frameworks/libmonobdwgc-2.0.dylib",
+          "sha256": "659e6a17791902161fe3a31900f59696fbc9c4c5bbb8fa95d4d4e7609d7d3217"
+        }
+      ]
+    },
+    {
+      "engine": "unity",
+      "version": "2021.2.20f1",
+      "variant": "win-x64-mono",
+      "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2021.2.20f1/unity-2021.2.20f1-win-x64-mono.zip",
+      "size": 15856504,
+      "sha256": "2993c36471953811b75f43b145bfc72789edde857342ec28180781f728e2df33",
+      "files": [
+        {
+          "path": "MonoBleedingEdge/EmbedRuntime/mono-2.0-bdwgc.dll",
+          "sha256": "6a0d22bc964e88684a4291e0ecf7b24094dc616b274c2dec052ea77dc72f79cd"
+        },
+        {
+          "path": "UnityPlayer.dll",
+          "sha256": "09bc8eda55993e20f8a287e51381ac1e68e55df9736373334860279fcf95b91a"
+        }
+      ]
+    },
+    {
+      "engine": "unity",
+      "version": "2021.2.20f1",
+      "variant": "win-x86-mono",
+      "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2021.2.20f1/unity-2021.2.20f1-win-x86-mono.zip",
+      "size": 12386804,
+      "sha256": "383a1a18b0e43b528b85c1d3ce7bdcb9d5b78fdcdcd67831dd671e37f3fc1d78",
+      "files": [
+        {
+          "path": "MonoBleedingEdge/EmbedRuntime/mono-2.0-bdwgc.dll",
+          "sha256": "5754bd9e3a9138fa0af0c6e3f5429ce287fe2dfa2fac170a03fe8d10bcaa24a1"
+        },
+        {
+          "path": "UnityPlayer.dll",
+          "sha256": "a300e6ab223f317845186dacfd70f934a069616a3815bceab5954cf1d5f75aad"
+        }
+      ]
+    },
+    {
+      "engine": "unity",
       "version": "2021.3.0f1",
       "variant": "linux-x64-mono",
       "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2021.3.0f1/unity-2021.3.0f1-linux-x64-mono.zip",
