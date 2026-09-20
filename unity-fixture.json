@@ -1,0 +1,86 @@
+{
+  "scenes": [
+    {
+      "path": "Assets/Scenes/Boot.unity",
+      "buildIndex": 0,
+      "roots": [
+        {
+          "name": "Foo",
+          "children": [
+            {
+              "name": "Bar",
+              "children": [
+                {
+                  "name": "Baz",
+                  "children": [
+                    {
+                      "name": "Qux",
+                      "components": ["Transform", "Marker"],
+                      "localPosition": [1.25, -2.5, 3.75],
+                      "localRotation": [0.5, 0.5, 0.5, 0.5],
+                      "localScale": [2, 4, 8]
+                    },
+                    {
+                      "name": "Hidden",
+                      "active": false,
+                      "children": [
+                        {
+                          "name": "Quux",
+                          "active": true,
+                          "activeInHierarchy": false
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Assets/Scenes/Deeply/Nested/Second.unity",
+      "buildIndex": 1,
+      "loadedBy": "FixtureData.Awake, additively",
+      "roots": [{ "name": "SecondRoot" }]
+    }
+  ],
+  "dontDestroyOnLoad": {
+    "roots": [{ "name": "Fixture", "components": ["Transform", "FixtureData"] }]
+  },
+  "classes": {
+    "FixtureData": {
+      "namespace": "",
+      "assembly": "Assembly-CSharp",
+      "statics": {
+        "Instance": "the FixtureData component on Fixture",
+        "StaticInt": 4242,
+        "StaticString": "static-fixture"
+      },
+      "fields": {
+        "intValue": 1337,
+        "longValue": 9000000000,
+        "floatValue": 3.5,
+        "doubleValue": 2.718281828,
+        "boolValue": true,
+        "stringValue": "hello-fixture",
+        "hero": { "class": "Hero", "id": 7, "level": 12, "title": "the-brave" },
+        "intArray": [100, 200, 300],
+        "intList": [10, 20, 30],
+        "stringList": ["a", "b", "c"],
+        "dict": { "one": 1, "two": 2, "three": 3 }
+      }
+    },
+    "Marker": {
+      "namespace": "",
+      "assembly": "Assembly-CSharp",
+      "fields": { "value": 4242 }
+    },
+    "Hero": {
+      "namespace": "",
+      "assembly": "Assembly-CSharp",
+      "fields": ["id", "level", "title"]
+    }
+  }
+}

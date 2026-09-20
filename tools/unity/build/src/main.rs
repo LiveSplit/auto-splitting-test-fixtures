@@ -1,6 +1,6 @@
-//! Builds one Unity version's fixture assets: an empty player per variant,
-//! then just the files the tests read, zipped and hashed, with the manifest
-//! entries printed to paste into manifest.json.
+//! Builds one Unity version's fixture assets: the fixture player per
+//! variant, then just the files the tests read, zipped and hashed, with the
+//! manifest entries printed to paste into manifest.json.
 
 use std::{
     fs,
@@ -102,6 +102,39 @@ fn walk(root: &Path, at: &str, into: &mut Vec<(String, PathBuf)>) {
             into.push((relative, path));
         }
     }
+}
+
+/// Copies a directory tree, keeping the relative paths.
+fn copy_tree(from: &Path, to: &Path) {
+    for entry in fs::read_dir(from).unwrap_or_else(|_| fail("assets directory unreadable")) {
+        let path = entry.expect("directory entry").path();
+        let target = to.join(path.file_name().expect("a name"));
+        if path.is_dir() {
+            fs::create_dir_all(&target).expect("creating a directory");
+            copy_tree(&path, &target);
+        } else {
+            fs::copy(&path, &target)
+                .unwrap_or_else(|_| fail(&format!("copying {}", path.display())));
+        }
+    }
+}
+
+/// Sets up a fresh project: copies in the shipped scenes, scripts and meta
+/// files, then has the editor turn on text serialization and turn off audio.
+fn prepare(editor: &Path, workspace: &Path, project: &Path, tool: &Path) {
+    let assets = project.join("Assets");
+    copy_tree(&tool.join("assets"), &assets);
+
+    run_editor(
+        editor,
+        &workspace.join("prepare.log"),
+        &[
+            "-projectPath",
+            &project.to_string_lossy(),
+            "-executeMethod",
+            "FixtureBuild.Prepare",
+        ],
+    );
 }
 
 /// Zips the files at their in-build relative paths, answering the archive's
@@ -220,7 +253,9 @@ fn main() {
 
     let workspace = args.out.join(&version);
     let project = workspace.join("project");
-    if !project.exists() {
+    let tool = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let fresh = !project.exists();
+    if fresh {
         fs::create_dir_all(&workspace).expect("creating the workspace");
         run_editor(
             &args.editor,
@@ -229,13 +264,19 @@ fn main() {
         );
     }
 
+    // The build script is copied on every run, so a change to it works
+    // without a fresh project.
     let editor_scripts = project.join("Assets").join("Editor");
     fs::create_dir_all(&editor_scripts).expect("creating Assets/Editor");
     fs::copy(
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("editor/FixtureBuild.cs"),
+        tool.join("editor/FixtureBuild.cs"),
         editor_scripts.join("FixtureBuild.cs"),
     )
     .expect("copying FixtureBuild.cs");
+
+    if fresh {
+        prepare(&args.editor, &workspace, &project, tool);
+    }
 
     let mut manifest = Vec::new();
     for variant in &args.variants {
