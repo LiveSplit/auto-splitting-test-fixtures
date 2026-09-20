@@ -128,6 +128,78 @@
     },
     {
       "engine": "unity",
+      "version": "2017.3.0f3",
+      "variant": "linux-x64-mono",
+      "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2017.3.0f3/unity-2017.3.0f3-linux-x64-mono.zip",
+      "size": 14800893,
+      "sha256": "c9c68a4d222d6511c52ff27ca88686b321538bbd906820697e745c129e12598e",
+      "files": [
+        {
+          "path": "fixture_Data/Mono/x86_64/libmono.so",
+          "sha256": "f20c7aaa41b4136339ef7a8c7540a0302f2a01625f777fe6cf82b4d63315c025"
+        },
+        {
+          "path": "fixture",
+          "sha256": "8ed93cba278f1c98baa11a67d36b31e9cd80a791875145d99bc35b0c6866c84d"
+        }
+      ]
+    },
+    {
+      "engine": "unity",
+      "version": "2017.3.0f3",
+      "variant": "mac-mono",
+      "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2017.3.0f3/unity-2017.3.0f3-mac-mono.zip",
+      "size": 13529269,
+      "sha256": "9da2b0ed4433ebd4c1f30076bc08e32e919e1489f67a4a8e692dc69475b2b758",
+      "files": [
+        {
+          "path": "fixture.app/Contents/Frameworks/Mono/MonoEmbedRuntime/osx/libmono.0.dylib",
+          "sha256": "97395313c281872bceb722be8f579868364ab6b4e537b5ab965db338dd182191"
+        },
+        {
+          "path": "fixture.app/Contents/MacOS/fixture",
+          "sha256": "0a585e17168d174334694f2b19e7e33616126e1bdf500cca247698f800462ae7"
+        }
+      ]
+    },
+    {
+      "engine": "unity",
+      "version": "2017.3.0f3",
+      "variant": "win-x64-mono",
+      "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2017.3.0f3/unity-2017.3.0f3-win-x64-mono.zip",
+      "size": 11123143,
+      "sha256": "806f503c48920088a7b67ca40ada27cdbbd623ff3f35003caf032461616da47b",
+      "files": [
+        {
+          "path": "UnityPlayer.dll",
+          "sha256": "3677f08abfed2b098866b368fe28c806654dbf28cee86631b385f42638d6aaf9"
+        },
+        {
+          "path": "fixture_Data/Mono/EmbedRuntime/mono.dll",
+          "sha256": "582b77fdf635c36445de420c620abd4fd2562bb8dc5e9b0990f8b5a2dfaeed77"
+        }
+      ]
+    },
+    {
+      "engine": "unity",
+      "version": "2017.3.0f3",
+      "variant": "win-x86-mono",
+      "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2017.3.0f3/unity-2017.3.0f3-win-x86-mono.zip",
+      "size": 8727311,
+      "sha256": "1a75806e57dddf7b568b5a021fba9822e982b70138e001c052ae78474eafa75b",
+      "files": [
+        {
+          "path": "UnityPlayer.dll",
+          "sha256": "ba18c424521166fbd53d75ae4ec6f281a97ed06711e09abf5d88bd5190f9d724"
+        },
+        {
+          "path": "fixture_Data/Mono/EmbedRuntime/mono.dll",
+          "sha256": "95a3542e05cddcb984fce8c3682c578c59c7c29b35816ff936b47ddfeeb5a214"
+        }
+      ]
+    },
+    {
+      "engine": "unity",
       "version": "2017.4.40f1",
       "variant": "linux-x64-mono",
       "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2017.4.40f1/unity-2017.4.40f1-linux-x64-mono.zip",
