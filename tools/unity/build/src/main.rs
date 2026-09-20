@@ -1,6 +1,6 @@
 //! Builds one Unity version's fixture assets: the fixture player per
-//! variant, then just the files the tests read, zipped and hashed, with the
-//! manifest entries printed to paste into manifest.json.
+//! variant, whole, zipped and hashed, with the manifest entries printed to
+//! paste into manifest.json.
 
 use std::{
     fs,
@@ -43,15 +43,10 @@ fn stem(name: &str) -> &str {
         .unwrap_or(name)
 }
 
-/// Whether a built file is one the tests read: the player binary always,
-/// the runtime library on mono, the game assembly and the metadata file on
-/// IL2CPP. Matched by name, wherever in the build it sits.
-fn wanted(backend: &str, name: &str) -> bool {
-    wanted_stem(backend, stem(name))
-}
-
-/// The names those files carry, with the extension each platform gives
-/// them taken off.
+/// The names of the files a walk reads, without the extension each platform
+/// gives them: the player binary always, the runtime library on Mono, the
+/// game assembly and the metadata file on IL2CPP. An asset holds the whole
+/// build, and it must hold these.
 fn wanted_stem(backend: &str, stem: &str) -> bool {
     match backend {
         "mono" => matches!(
@@ -314,14 +309,12 @@ fn main() {
 
         let last = |relative: &str| relative.rsplit('/').next().unwrap_or(relative).to_string();
 
-        // The binaries at the paths a shipped game holds them at, and the
-        // symbols for those binaries, which a build keeps in a directory of
-        // its own beside the player.
-        let mut binaries: Vec<_> = built
+        // Everything a shipped game holds, at the paths a shipped game uses.
+        // The build puts the files a game does not ship in a directory of
+        // its own beside the player, and only the symbols come from there.
+        let shipped: Vec<_> = built
             .iter()
-            .filter(|(relative, _)| {
-                !relative.contains(NOT_SHIPPED) && wanted(backend, &last(relative))
-            })
+            .filter(|(relative, _)| !relative.contains(NOT_SHIPPED))
             .cloned()
             .collect();
 
@@ -329,30 +322,18 @@ fn main() {
         // Windows and Mac until 2017 and on Linux until 2019: no UnityPlayer
         // library exists, and the executable itself is the player.
         let names_a_player = |stem: &str| stem == "UnityPlayer" || stem == "fixture";
-        if !binaries
-            .iter()
-            .any(|(relative, _)| names_a_player(stem(&last(relative))))
-        {
-            binaries.extend(
-                built
-                    .iter()
-                    .find(|(relative, _)| {
-                        !relative.contains(NOT_SHIPPED) && stem(&last(relative)) == "fixture"
-                    })
-                    .cloned(),
-            );
-        }
 
         // By role, not by count: a duplicate match for one role must not
         // stand in for another role's absence.
         let holds = |role: &dyn Fn(&str) -> bool| {
-            binaries
-                .iter()
-                .any(|(relative, _)| role(stem(&last(relative))))
+            shipped.iter().any(|(relative, _)| {
+                let name = last(relative);
+                role(stem(&name))
+            })
         };
         let complete = holds(&names_a_player)
             && match backend {
-                "mono" => holds(&|stem| !names_a_player(stem)),
+                "mono" => holds(&|stem| wanted_stem(backend, stem) && !names_a_player(stem)),
                 _ => {
                     holds(&|stem| stem == "GameAssembly")
                         && holds(&|stem| stem == "global-metadata.dat")
@@ -367,7 +348,7 @@ fn main() {
 
         // We leave the log out of the asset because it names the machine that
         // ran the build and when.
-        let mut files = binaries;
+        let mut files = shipped;
         files.extend(
             built
                 .iter()
