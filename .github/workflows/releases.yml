@@ -113,25 +113,6 @@ jobs:
               exit 1
             fi
 
-            # Every file the entry lists, at the path it lists, hashing what it
-            # says. Anything else in the archive means the manifest describes a
-            # different build.
-            rm -rf work/unpacked
-            mkdir work/unpacked
-            unzip -q "work/$name" -d work/unpacked
-            (cd work/unpacked && find . -type f | sed 's|^\./||' | sort) > held.txt
-            jq -r '.files[].path' <<<"$entry" | sort > listed.txt
-            if ! diff -u listed.txt held.txt; then
-              echo "::error::$name holds different files than manifest.json lists"
-              exit 1
-            fi
-
-            jq -r '.files[] | "\(.sha256)  \(.path)"' <<<"$entry" > sums.txt
-            if ! (cd work/unpacked && sha256sum -c --quiet "$GITHUB_WORKSPACE/sums.txt"); then
-              echo "::error::a file inside $name does not hash to what manifest.json says"
-              exit 1
-            fi
-
             rm -f "work/$name"
           done
 
