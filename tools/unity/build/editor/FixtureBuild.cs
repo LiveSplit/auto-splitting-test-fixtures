@@ -5,7 +5,7 @@ using System;
 using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
-using UnityEngine.SceneManagement;
+using UnityEngine;
 #if UNITY_2018_1_OR_NEWER
 using UnityEditor.Build.Reporting;
 #endif
@@ -34,7 +34,7 @@ public static class FixtureBuild
 
         var options = new BuildPlayerOptions
         {
-            scenes = new[] { EmptyScene() },
+            scenes = Scenes(),
             locationPathName = Path.Combine(outDir, PlayerName(target)),
             target = target,
         };
@@ -48,18 +48,104 @@ public static class FixtureBuild
 #endif
     }
 
-    // BuildPlayer takes scene paths, and a scene has a path once it is
-    // saved. This saves one empty scene and hands back where it went.
-    static string EmptyScene()
+    const string BootScene = "Assets/Scenes/Boot.unity";
+
+    // This path is too long to fit inside the scene's own record. That way a
+    // reader sees a short path and a long one.
+    const string SecondScene = "Assets/Scenes/Deeply/Nested/Second.unity";
+
+    static string[] Scenes()
     {
-        const string path = "Assets/Fixture.unity";
-        if (!File.Exists(path))
+        if (!File.Exists(BootScene) || !File.Exists(SecondScene))
         {
-            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            EditorSceneManager.SaveScene(scene, path);
+            throw new FileNotFoundException("the fixture scenes are not in the project");
         }
 
-        return path;
+        return new[] { BootScene, SecondScene };
+    }
+
+    /// <summary>
+    ///     Sets the project up once before any variant builds. It turns on
+    ///     text serialization so the tool can patch the settings, and turns
+    ///     audio off because there isn't a player flag for it.
+    /// </summary>
+    public static void Prepare()
+    {
+        EditorSettings.serializationMode = SerializationMode.ForceText;
+        SilenceAudio();
+        AssetDatabase.SaveAssets();
+        EditorApplication.Exit(0);
+    }
+
+    /// <summary>
+    ///     Writes the two fixture scenes the tool ships. Run this once from
+    ///     the oldest editor: a newer editor upgrades an old scene when it
+    ///     imports it, but an older editor can't read a new one. The scenes
+    ///     hold what unity-fixture.json describes. Nothing in them moves, so
+    ///     every run reads the same.
+    /// </summary>
+    public static void CreateScenes()
+    {
+        EditorSettings.serializationMode = SerializationMode.ForceText;
+        Directory.CreateDirectory(Path.GetDirectoryName(SecondScene));
+
+        var second = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        new GameObject("SecondRoot");
+        EditorSceneManager.SaveScene(second, SecondScene);
+
+        var boot = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        new GameObject("Fixture").AddComponent<FixtureData>();
+
+        var foo = new GameObject("Foo");
+        var bar = new GameObject("Bar");
+        var baz = new GameObject("Baz");
+        var qux = new GameObject("Qux");
+        var hidden = new GameObject("Hidden");
+        var quux = new GameObject("Quux");
+        bar.transform.SetParent(foo.transform);
+        baz.transform.SetParent(bar.transform);
+        qux.transform.SetParent(baz.transform);
+        hidden.transform.SetParent(baz.transform);
+        quux.transform.SetParent(hidden.transform);
+
+        qux.AddComponent<Marker>();
+
+        // Quux stays active under Hidden, which is inactive. That way there is
+        // an object whose own flag differs from its effective one.
+        hidden.SetActive(false);
+
+        // Every component can be stored exactly in a float. That way a reader
+        // can check for equality instead of a tolerance.
+        qux.transform.localPosition = new Vector3(1.25f, -2.5f, 3.75f);
+        qux.transform.localRotation = new Quaternion(0.5f, 0.5f, 0.5f, 0.5f);
+        qux.transform.localScale = new Vector3(2f, 4f, 8f);
+
+        EditorSceneManager.SaveScene(boot, BootScene);
+        AssetDatabase.SaveAssets();
+        EditorApplication.Exit(0);
+    }
+
+    // Turns audio off in the project settings, because there isn't a player
+    // flag for it. It goes through the serialized object because 5.6 writes
+    // the asset as binary.
+    static void SilenceAudio()
+    {
+        var loaded = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/AudioManager.asset");
+        if (loaded == null || loaded.Length == 0 || loaded[0] == null)
+        {
+            return;
+        }
+
+        var audio = new SerializedObject(loaded[0]);
+        var disabled = audio.FindProperty("m_DisableAudio");
+        if (disabled == null)
+        {
+            return;
+        }
+
+        disabled.boolValue = true;
+        audio.ApplyModifiedProperties();
+        AssetDatabase.SaveAssets();
     }
 
     static string PlayerName(BuildTarget target)
