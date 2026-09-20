@@ -132,30 +132,20 @@ fn prepare(editor: &Path, workspace: &Path, project: &Path, tool: &Path) {
     );
 }
 
-/// Zips the files at their in-build relative paths, answering the archive's
-/// size and digest, and each file's own digest. The same files give the same
-/// archive on any machine.
-fn archive(files: &[(String, PathBuf)], asset: &Path) -> (u64, String, Vec<serde_json::Value>) {
+/// Zips the files at their in-build relative paths and answers the
+/// archive's size and digest.
+fn archive(files: &[(String, PathBuf)], asset: &Path) -> (u64, String) {
     let mut zip = ZipWriter::new(fs::File::create(asset).expect("creating the asset"));
-    let mut entries = Vec::new();
     for (relative, file) in files {
         let bytes = fs::read(file).expect("reading a built file");
         zip.start_file(relative, SimpleFileOptions::default())
             .expect("starting the zip entry");
         zip.write_all(&bytes).expect("writing the zip entry");
-        entries.push(serde_json::json!({
-            "path": relative,
-            "sha256": format!("{:x}", Sha256::digest(&bytes)),
-        }));
     }
     zip.finish().expect("finishing the asset");
 
     let bytes = fs::read(asset).expect("re-reading the asset");
-    (
-        bytes.len() as u64,
-        format!("{:x}", Sha256::digest(&bytes)),
-        entries,
-    )
+    (bytes.len() as u64, format!("{:x}", Sha256::digest(&bytes)))
 }
 
 /// Runs the editor with its log kept beside whatever it produces. The log
@@ -357,7 +347,7 @@ fn main() {
         );
 
         let asset = workspace.join(format!("unity-{version}-{name}.zip"));
-        let (size, digest, names) = archive(&files, &asset);
+        let (size, digest) = archive(&files, &asset);
 
         let entry = serde_json::json!({
             "engine": "unity",
@@ -366,7 +356,6 @@ fn main() {
             "asset": format!("{RELEASES}/unity-{version}/unity-{version}-{name}.zip"),
             "size": size,
             "sha256": digest,
-            "files": names,
         });
 
         manifest.push(entry);
