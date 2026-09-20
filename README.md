@@ -9,10 +9,10 @@ Binaries this size don't belong in git history, so each engine version is a rele
 One release per engine version, tagged `<engine>-<version>`. Each asset is one variant of that version: a platform, plus whatever else that engine varies by.
 
 ```
-unity-6000.5.8f1-win-x64-mono.zip
-unity-6000.5.8f1-win-x64-il2cpp.zip
-unity-6000.5.8f1-win-x86-mono.zip
-unity-6000.5.8f1-win-x86-il2cpp.zip
+unity-6000.5.10f1-win-x64-mono.zip
+unity-6000.5.10f1-win-x64-il2cpp.zip
+unity-6000.5.10f1-win-x86-mono.zip
+unity-6000.5.10f1-win-x86-il2cpp.zip
 ```
 
 The program inside is the emptiest one the engine builds, made the way a shipped one is. An asset holds the engine's own runtime and metadata files, and their symbols where the build produces any. Each engine's build tool decides which files those are.
