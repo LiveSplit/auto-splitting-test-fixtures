@@ -17,20 +17,27 @@ public static class FixtureBuild
     ///     The <c>unity-fixtures</c> tool copies this file into the throwaway project, then starts the editor in batch mode.
     /// </summary>
     /// <remarks>
-    ///     <c>-fixtureOut</c> says where the player goes and <c>-fixtureBackend</c> picks Mono or IL2CPP;
-    ///     Unity's own <c>-buildTarget</c> selects the platform.
+    ///     <c>-fixtureOut</c> says where the player goes and <c>-fixtureVariant</c> what to build, by the
+    ///     variant's name; Unity's own <c>-buildTarget</c> selects the platform.
     ///     The editor writes that command line into its log to document how a player was built.
     /// </remarks>
     public static void Build()
     {
-        string outDir = ArgAfter("-fixtureOut");
-        string backend = ArgAfter("-fixtureBackend");
+        string outDir = Word("-fixtureOut");
+        var variant = Variant.FromCommandLine();
 
         var target = EditorUserBuildSettings.activeBuildTarget;
         var group = BuildPipeline.GetBuildTargetGroup(target);
-        PlayerSettings.SetScriptingBackend(
-            group,
-            backend == "il2cpp" ? ScriptingImplementation.IL2CPP : ScriptingImplementation.Mono2x);
+        PlayerSettings.SetScriptingBackend(group, variant.Backend);
+
+#if UNITY_2018_1_OR_NEWER
+        // The configuration reaches the C++ compile of the runtime itself, so
+        // a master player is not the binary a release signature matched.
+        if (variant.Backend == ScriptingImplementation.IL2CPP)
+        {
+            PlayerSettings.SetIl2CppCompilerConfiguration(group, variant.Configuration);
+        }
+#endif
 
         var options = new BuildPlayerOptions
         {
@@ -63,6 +70,20 @@ public static class FixtureBuild
 
         return new[] { BootScene, SecondScene };
     }
+
+#if UNITY_2017_1_OR_NEWER && !UNITY_2019_1_OR_NEWER
+    /// <summary>
+    ///     Sets the scripting runtime the variant in <c>-fixtureVariant</c> wants: legacy ships
+    ///     <c>mono.dll</c>, bdwgc ships <c>mono-2.0-bdwgc.dll</c>. The switch only takes effect in a
+    ///     fresh session, so the tool runs this on its own and builds in the next run.
+    /// </summary>
+    public static void SetRuntime()
+    {
+        PlayerSettings.scriptingRuntimeVersion = Variant.FromCommandLine().Runtime;
+        AssetDatabase.SaveAssets();
+        EditorApplication.Exit(0);
+    }
+#endif
 
     /// <summary>
     ///     Sets the project up once before any variant builds. It turns on
@@ -165,13 +186,56 @@ public static class FixtureBuild
         }
     }
 
-    static string ArgAfter(string name)
+    /// <summary>
+    ///     What the last word of a variant name says, such as <c>win-x64-mono-bdwgc</c> or
+    ///     <c>linux-x64-il2cpp-master</c>: the backend, and its Mono runtime or IL2CPP configuration.
+    ///     Unity's own <c>-buildTarget</c> already selected the platform.
+    /// </summary>
+    sealed class Variant
+    {
+        public ScriptingImplementation Backend;
+#if UNITY_2018_1_OR_NEWER
+        public Il2CppCompilerConfiguration Configuration;
+#endif
+#if UNITY_2017_1_OR_NEWER && !UNITY_2019_1_OR_NEWER
+        public ScriptingRuntimeVersion Runtime;
+#endif
+
+        public static Variant FromCommandLine()
+        {
+            string name = Word("-fixtureVariant");
+            string flavor = name.Substring(name.LastIndexOf('-') + 1);
+            var variant = new Variant();
+            switch (flavor)
+            {
+                case "legacy":
+                case "bdwgc":
+                    variant.Backend = ScriptingImplementation.Mono2x;
+#if UNITY_2017_1_OR_NEWER && !UNITY_2019_1_OR_NEWER
+                    variant.Runtime = flavor == "legacy" ? ScriptingRuntimeVersion.Legacy : ScriptingRuntimeVersion.Latest;
+#endif
+                    return variant;
+                case "release":
+                case "master":
+                    variant.Backend = ScriptingImplementation.IL2CPP;
+#if UNITY_2018_1_OR_NEWER
+                    variant.Configuration = flavor == "master" ? Il2CppCompilerConfiguration.Master : Il2CppCompilerConfiguration.Release;
+#endif
+                    return variant;
+                default:
+                    throw new ArgumentException("unknown variant " + name);
+            }
+        }
+    }
+
+    // The word after a flag on the editor's command line.
+    static string Word(string flag)
     {
         string[] args = Environment.GetCommandLineArgs();
-        int at = Array.IndexOf(args, name);
+        int at = Array.IndexOf(args, flag);
         if (at < 0 || at + 1 >= args.Length)
         {
-            throw new ArgumentException("missing " + name);
+            throw new ArgumentException("missing " + flag);
         }
 
         return args[at + 1];

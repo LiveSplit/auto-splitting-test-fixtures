@@ -3,31 +3,123 @@
 //! paste into manifest.json.
 
 use std::{
-    fs,
+    fmt, fs,
     io::Write,
     path::{Path, PathBuf},
     process::{self, Command},
+    str::FromStr,
     time::{Duration, Instant},
 };
 
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use sha2::{Digest, Sha256};
 use zip::{write::SimpleFileOptions, ZipWriter};
 
 const RELEASES: &str =
     "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download";
 
-/// Variant name, the editor's build target, and the scripting backend.
-const VARIANTS: &[(&str, &str, &str)] = &[
-    ("win-x64-mono", "StandaloneWindows64", "mono"),
-    ("win-x64-il2cpp", "StandaloneWindows64", "il2cpp"),
-    ("win-x86-mono", "StandaloneWindows", "mono"),
-    ("win-x86-il2cpp", "StandaloneWindows", "il2cpp"),
-    ("linux-x64-mono", "StandaloneLinux64", "mono"),
-    ("linux-x64-il2cpp", "StandaloneLinux64", "il2cpp"),
-    ("mac-mono", "StandaloneOSX", "mono"),
-    ("mac-il2cpp", "StandaloneOSX", "il2cpp"),
-];
+/// A platform a player is built for.
+#[derive(Copy, Clone, PartialEq, Eq, ValueEnum)]
+enum Platform {
+    WinX64,
+    WinX86,
+    LinuxX64,
+    Mac,
+}
+
+impl Platform {
+    /// The editor's name for the build target. Mac's was renamed in 2017.3.
+    fn target(self, version: &str) -> &'static str {
+        match self {
+            Platform::WinX64 => "StandaloneWindows64",
+            Platform::WinX86 => "StandaloneWindows",
+            Platform::LinuxX64 => "StandaloneLinux64",
+            Platform::Mac if major_minor(version) < (2017, 3) => "StandaloneOSXUniversal",
+            Platform::Mac => "StandaloneOSX",
+        }
+    }
+}
+
+/// The scripting backend with what varies inside it. A Mono player ships
+/// one of two runtimes: the legacy one, `mono.dll`, which is all there is
+/// before 2017.1, or the newer one built with the Boehm collector,
+/// `mono-2.0-bdwgc.dll`, which is all there is from 2019.1 on. An IL2CPP
+/// player's C++ configuration changes its compiled code, which matters to
+/// anyone matching signatures in it.
+#[derive(Copy, Clone, PartialEq, Eq, ValueEnum)]
+enum Flavor {
+    MonoLegacy,
+    MonoBdwgc,
+    Il2cppRelease,
+    Il2cppMaster,
+}
+
+impl Flavor {
+    fn is_mono(self) -> bool {
+        matches!(self, Flavor::MonoLegacy | Flavor::MonoBdwgc)
+    }
+
+    /// Whether the editor can build this flavor at all.
+    fn offered_by(self, version: &str) -> bool {
+        match self {
+            Flavor::MonoLegacy => major_minor(version) < (2019, 1),
+            Flavor::MonoBdwgc => major_minor(version) >= (2017, 1),
+            _ => true,
+        }
+    }
+
+    /// Whether the editor has the Mono runtime toggle, which it does from
+    /// 2017.1 through 2018.4.
+    fn toggles_runtime(version: &str) -> bool {
+        ((2017, 1)..(2019, 1)).contains(&major_minor(version))
+    }
+}
+
+/// One variant of a version, named `<platform>-<flavor>`, such as
+/// `win-x64-mono-bdwgc` or `linux-x64-il2cpp-release`. The build script
+/// gets the name and reads the flavor back out of it.
+#[derive(Copy, Clone, PartialEq, Eq)]
+struct Variant {
+    platform: Platform,
+    flavor: Flavor,
+}
+
+impl Variant {
+    fn all() -> impl Iterator<Item = Variant> {
+        Platform::value_variants().iter().flat_map(|&platform| {
+            Flavor::value_variants()
+                .iter()
+                .map(move |&flavor| Variant { platform, flavor })
+        })
+    }
+}
+
+fn name_of<T: ValueEnum>(value: T) -> String {
+    value
+        .to_possible_value()
+        .expect("a named value")
+        .get_name()
+        .to_string()
+}
+
+impl fmt::Display for Variant {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}-{}", name_of(self.platform), name_of(self.flavor))
+    }
+}
+
+impl FromStr for Variant {
+    type Err = String;
+
+    fn from_str(name: &str) -> Result<Self, Self::Err> {
+        Variant::all()
+            .find(|variant| variant.to_string() == name)
+            .ok_or_else(|| {
+                let names: Vec<_> = Variant::all().map(|variant| variant.to_string()).collect();
+                format!("one of {}", names.join(", "))
+            })
+    }
+}
 
 fn fail(message: &str) -> ! {
     eprintln!("{message}");
@@ -47,9 +139,9 @@ fn stem(name: &str) -> &str {
 /// gives them: the player binary always, the runtime library on Mono, the
 /// game assembly and the metadata file on IL2CPP. An asset holds the whole
 /// build, and it must hold these.
-fn wanted_stem(backend: &str, stem: &str) -> bool {
-    match backend {
-        "mono" => matches!(
+fn wanted_stem(flavor: Flavor, stem: &str) -> bool {
+    if flavor.is_mono() {
+        matches!(
             stem,
             "UnityPlayer"
                 | "mono"
@@ -57,8 +149,9 @@ fn wanted_stem(backend: &str, stem: &str) -> bool {
                 | "libmono"
                 | "libmono.0"
                 | "libmonobdwgc-2.0"
-        ),
-        _ => matches!(stem, "UnityPlayer" | "GameAssembly" | "global-metadata.dat"),
+        )
+    } else {
+        matches!(stem, "UnityPlayer" | "GameAssembly" | "global-metadata.dat")
     }
 }
 
@@ -66,11 +159,11 @@ fn wanted_stem(backend: &str, stem: &str) -> bool {
 /// separated debug info elsewhere. IL2CPP compiles the runtime's own
 /// structures into the game assembly, so its symbols name the layouts a
 /// walk over that build has to know.
-fn wanted_symbols(backend: &str, name: &str) -> bool {
+fn wanted_symbols(flavor: Flavor, name: &str) -> bool {
     name.strip_suffix(".pdb")
         .or_else(|| name.strip_suffix(".debug"))
         .map(|stem| stem.strip_suffix("_s").unwrap_or(stem))
-        .is_some_and(|stem| wanted_stem(backend, stem))
+        .is_some_and(|stem| wanted_stem(flavor, stem))
 }
 
 /// The directory a build puts beside the player for the files a game does
@@ -116,19 +209,14 @@ fn copy_tree(from: &Path, to: &Path) {
 
 /// Sets up a fresh project: copies in the shipped scenes, scripts and meta
 /// files, then has the editor turn on text serialization and turn off audio.
-fn prepare(editor: &Path, workspace: &Path, project: &Path, tool: &Path) {
+fn prepare(editor: &Path, workspace: &Path, project: &Path, tool: &Path, version: &str) {
     let assets = project.join("Assets");
     copy_tree(&tool.join("assets"), &assets);
 
     run_editor(
         editor,
         &workspace.join("prepare.log"),
-        &[
-            "-projectPath",
-            &project.to_string_lossy(),
-            "-executeMethod",
-            "FixtureBuild.Prepare",
-        ],
+        &Run::Prepare.args(project, version),
     );
 }
 
@@ -148,10 +236,48 @@ fn archive(files: &[(String, PathBuf)], asset: &Path) -> (u64, String) {
     (bytes.len() as u64, format!("{:x}", Sha256::digest(&bytes)))
 }
 
+/// What one run of the editor does. All but the first go through the build
+/// script's `-executeMethod` entry points.
+enum Run<'a> {
+    CreateProject,
+    Prepare,
+    SetRuntime(Variant),
+    Build { variant: Variant, out: &'a Path },
+}
+
+impl Run<'_> {
+    fn args(&self, project: &Path, version: &str) -> Vec<String> {
+        let project = project.to_string_lossy().into_owned();
+        let mut args: Vec<String> = match self {
+            Run::CreateProject => return vec!["-createProject".into(), project],
+            Run::Prepare => vec!["FixtureBuild.Prepare".into()],
+            Run::SetRuntime(variant) => vec![
+                "FixtureBuild.SetRuntime".into(),
+                "-fixtureVariant".into(),
+                variant.to_string(),
+            ],
+            Run::Build { variant, out } => vec![
+                "FixtureBuild.Build".into(),
+                "-buildTarget".into(),
+                variant.platform.target(version).into(),
+                "-fixtureOut".into(),
+                out.to_string_lossy().into_owned(),
+                "-fixtureVariant".into(),
+                variant.to_string(),
+            ],
+        };
+        args.splice(
+            0..0,
+            ["-projectPath".into(), project, "-executeMethod".into()],
+        );
+        args
+    }
+}
+
 /// Runs the editor with its log kept beside whatever it produces. The log
 /// carries the build report and the engine's own version lines, which is
 /// what says how an asset came to be.
-fn run_editor(editor: &Path, log: &Path, args: &[&str]) -> Duration {
+fn run_editor(editor: &Path, log: &Path, args: &[String]) -> Duration {
     let mut command = Command::new(editor);
     command
         .args(["-batchmode", "-nographics", "-quit"])
@@ -164,22 +290,6 @@ fn run_editor(editor: &Path, log: &Path, args: &[&str]) -> Duration {
         Ok(status) if status.success() => started.elapsed(),
         Ok(_) => fail(&format!("editor exited nonzero, see {}", log.display())),
         Err(error) => fail(&format!("editor would not start: {error}")),
-    }
-}
-
-/// The mac build target's command line name, which 2017.3 renamed.
-fn mac_target(version: &str) -> &'static str {
-    let mut parts = version.split(['.', 'a', 'b', 'f', 'p']);
-    let mut next = || {
-        parts
-            .next()
-            .and_then(|part| part.parse().ok())
-            .unwrap_or(0u32)
-    };
-    if (next(), next()) < (2017, 3) {
-        "StandaloneOSXUniversal"
-    } else {
-        "StandaloneOSX"
     }
 }
 
@@ -214,22 +324,26 @@ struct Args {
 
     /// Narrows the run to these variants. Every variant builds without
     /// it, which needs every module installed
-    #[arg(short = 'v', long = "variant", num_args = 1.., value_parser = known_variant)]
-    variants: Vec<String>,
+    #[arg(short = 'v', long = "variant", num_args = 1..)]
+    variants: Vec<Variant>,
 }
 
-fn known_variant(value: &str) -> Result<String, String> {
-    let known = VARIANTS.iter().any(|(name, ..)| *name == value);
-    known.then(|| value.to_string()).ok_or_else(|| {
-        let names: Vec<_> = VARIANTS.iter().map(|(name, ..)| *name).collect();
-        format!("one of {}", names.join(", "))
-    })
+/// The major and minor of a Unity version such as `2019.4.41f2`.
+fn major_minor(version: &str) -> (u32, u32) {
+    let mut parts = version.split(['.', 'a', 'b', 'f', 'p']);
+    let mut next = || {
+        parts
+            .next()
+            .and_then(|part| part.parse().ok())
+            .unwrap_or(0u32)
+    };
+    (next(), next())
 }
 
 fn main() {
     let mut args = Args::parse();
     if args.variants.is_empty() {
-        args.variants = VARIANTS.iter().map(|(name, ..)| name.to_string()).collect();
+        args.variants = Variant::all().collect();
     }
     let version = args
         .editor_version
@@ -245,7 +359,7 @@ fn main() {
         run_editor(
             &args.editor,
             &workspace.join("create-project.log"),
-            &["-createProject", &project.to_string_lossy()],
+            &Run::CreateProject.args(&project, &version),
         );
     }
 
@@ -260,37 +374,37 @@ fn main() {
     .expect("copying FixtureBuild.cs");
 
     if fresh {
-        prepare(&args.editor, &workspace, &project, tool);
+        prepare(&args.editor, &workspace, &project, tool, &version);
     }
 
     let mut manifest = Vec::new();
-    for variant in &args.variants {
-        let &(name, target, backend) = VARIANTS
-            .iter()
-            .find(|(name, ..)| name == variant)
-            .expect("validated above");
-        let target = match target {
-            "StandaloneOSX" => mac_target(&version),
-            _ => target,
-        };
+    for &variant in &args.variants {
+        let name = variant.to_string();
+        let flavor = variant.flavor;
+        if !flavor.offered_by(&version) {
+            fail(&format!("{name}: {version} can't build it"));
+        }
 
-        let build_dir = workspace.join(name);
+        // The runtime switch takes effect in a fresh editor session, so it
+        // gets a run of its own before the build.
+        if flavor.is_mono() && Flavor::toggles_runtime(&version) {
+            run_editor(
+                &args.editor,
+                &workspace.join(format!("runtime-{}.log", name_of(flavor))),
+                &Run::SetRuntime(variant).args(&project, &version),
+            );
+        }
+
+        let build_dir = workspace.join(&name);
         let log = workspace.join(format!("unity-{version}-{name}.log"));
         let took = run_editor(
             &args.editor,
             &log,
-            &[
-                "-projectPath",
-                &project.to_string_lossy(),
-                "-buildTarget",
-                target,
-                "-executeMethod",
-                "FixtureBuild.Build",
-                "-fixtureOut",
-                &build_dir.to_string_lossy(),
-                "-fixtureBackend",
-                backend,
-            ],
+            &Run::Build {
+                variant,
+                out: &build_dir,
+            }
+            .args(&project, &version),
         );
 
         let mut built = Vec::new();
@@ -322,12 +436,11 @@ fn main() {
             })
         };
         let complete = holds(&names_a_player)
-            && match backend {
-                "mono" => holds(&|stem| wanted_stem(backend, stem) && !names_a_player(stem)),
-                _ => {
-                    holds(&|stem| stem == "GameAssembly")
-                        && holds(&|stem| stem == "global-metadata.dat")
-                }
+            && if flavor.is_mono() {
+                holds(&|stem| wanted_stem(flavor, stem) && !names_a_player(stem))
+            } else {
+                holds(&|stem| stem == "GameAssembly")
+                    && holds(&|stem| stem == "global-metadata.dat")
             };
         if !complete {
             fail(&format!(
@@ -342,7 +455,7 @@ fn main() {
         files.extend(
             built
                 .iter()
-                .filter(|(relative, _)| wanted_symbols(backend, &last(relative)))
+                .filter(|(relative, _)| wanted_symbols(flavor, &last(relative)))
                 .cloned(),
         );
 
