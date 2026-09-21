@@ -13,7 +13,7 @@ Builds the fixture assets for one Unity version: one whole player per variant, z
 3. Have a Rust toolchain; the tool builds with stable cargo.
 4. Keep about 4 GB free per version. A run of every variant on 6000.5.10f1 leaves 3.2 GB in the workspace: 1.9 GB of project, 1.1 GB of players, and 223 MB of assets, the only part worth keeping once a release is up.
 
-The x86 variants need an editor that still ships a 32-bit player; narrow `-v` on versions that dropped it.
+The x86 variants need an editor that still ships a 32-bit player; narrow `-v` on versions that dropped it. The same goes for the Mono runtimes: editors before 2017.1 only have the legacy one, editors from 2019.1 on only bdwgc, and the tool refuses the other one.
 
 ## Usage
 
@@ -32,20 +32,22 @@ The editor binary is `Editor/Unity.exe` under a Hub install on Windows, `Editor/
 | `-o` | `--out` | **required** | Workspace to build into |
 | `-v` | `--variant` | optional | Build only these variants. Every variant builds without it |
 
-Variants are `win-x64-mono`, `win-x64-il2cpp`, `win-x86-mono`, `win-x86-il2cpp`, `linux-x64-mono`, `linux-x64-il2cpp`, `mac-mono`, and `mac-il2cpp`, passed together or one flag at a time:
+A variant is a platform, a scripting backend, and either the Mono scripting runtime or the IL2CPP C++ configuration. The platforms are `win-x64`, `win-x86`, `linux-x64` and `mac`. The Mono runtimes are `legacy`, the old runtime that ships as `mono.dll`, and `bdwgc`, the newer one built with the Boehm collector that ships as `mono-2.0-bdwgc.dll`. The IL2CPP configurations are `release` and `master`, which compile the runtime's own code differently, so a signature matched in one isn't matched in the other. That gives names like `win-x64-mono-legacy`, `win-x64-mono-bdwgc`, `win-x64-il2cpp-release` and `win-x64-il2cpp-master`, passed together or one flag at a time:
 
 ```
-cargo run --release -- -e "/path/to/Unity.exe" -o /path/to/destination -v win-x64-mono linux-x64-mono
+cargo run --release -- -e "/path/to/Unity.exe" -o /path/to/destination -v win-x64-mono-bdwgc linux-x64-il2cpp-release
 ```
+
+Switching the Mono runtime only takes effect in a fresh editor session, so the tool runs the editor once to switch it and once more to build.
 
 The workspace holds one directory per version. Inside it, `project/` is a throwaway project reused across runs, each variant builds into its own directory, and the assets are written next to them:
 
 ```
 <out>/6000.5.10f1/
 ├── project/
-├── win-x64-mono/
-├── unity-6000.5.10f1-win-x64-mono.zip
-└── unity-6000.5.10f1-win-x64-mono.log
+├── win-x64-mono-bdwgc/
+├── unity-6000.5.10f1-win-x64-mono-bdwgc.zip
+└── unity-6000.5.10f1-win-x64-mono-bdwgc.log
 ```
 
 Every editor run keeps its log beside what it produced. The log opens with the command line it ran, so it records what produced the asset. The run prints how long each build took and ends with the manifest entries.
