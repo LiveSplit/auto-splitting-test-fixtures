@@ -7,7 +7,6 @@ use std::{
     io::Write,
     path::{Path, PathBuf},
     process::{self, Command},
-    str::FromStr,
     time::{Duration, Instant},
 };
 
@@ -84,16 +83,6 @@ struct Variant {
     flavor: Flavor,
 }
 
-impl Variant {
-    fn all() -> impl Iterator<Item = Variant> {
-        Platform::value_variants().iter().flat_map(|&platform| {
-            Flavor::value_variants()
-                .iter()
-                .map(move |&flavor| Variant { platform, flavor })
-        })
-    }
-}
-
 fn name_of<T: ValueEnum>(value: T) -> String {
     value
         .to_possible_value()
@@ -105,19 +94,6 @@ fn name_of<T: ValueEnum>(value: T) -> String {
 impl fmt::Display for Variant {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}-{}", name_of(self.platform), name_of(self.flavor))
-    }
-}
-
-impl FromStr for Variant {
-    type Err = String;
-
-    fn from_str(name: &str) -> Result<Self, Self::Err> {
-        Variant::all()
-            .find(|variant| variant.to_string() == name)
-            .ok_or_else(|| {
-                let names: Vec<_> = Variant::all().map(|variant| variant.to_string()).collect();
-                format!("one of {}", names.join(", "))
-            })
     }
 }
 
@@ -305,9 +281,9 @@ fn version_from(editor: &Path) -> Option<String> {
     })
 }
 
-/// Builds one Unity version's fixture assets: an empty player per variant,
-/// zipped and hashed down to the files the tests read, with the manifest
-/// entries printed to paste into manifest.json.
+/// Builds one Unity version's fixture assets: the fixture player per
+/// variant, whole, zipped and hashed, with the manifest entries printed to
+/// paste into manifest.json.
 #[derive(Parser)]
 struct Args {
     /// Path to the editor binary
@@ -322,10 +298,14 @@ struct Args {
     #[arg(long)]
     editor_version: Option<String>,
 
-    /// Narrows the run to these variants. Every variant builds without
-    /// it, which needs every module installed
-    #[arg(short = 'v', long = "variant", num_args = 1..)]
-    variants: Vec<Variant>,
+    /// Platforms to build for. Every platform without it, which needs
+    /// every module installed
+    #[arg(short, long = "platform", num_args = 1..)]
+    platforms: Vec<Platform>,
+
+    /// Flavors to build. Every flavor the editor offers without it
+    #[arg(short, long = "flavor", num_args = 1..)]
+    flavors: Vec<Flavor>,
 }
 
 /// The major and minor of a Unity version such as `2019.4.41f2`.
@@ -341,14 +321,32 @@ fn major_minor(version: &str) -> (u32, u32) {
 }
 
 fn main() {
-    let mut args = Args::parse();
-    if args.variants.is_empty() {
-        args.variants = Variant::all().collect();
-    }
+    let args = Args::parse();
     let version = args
         .editor_version
         .or_else(|| version_from(&args.editor))
         .unwrap_or_else(|| fail("editor path names no version, pass --editor-version"));
+
+    let platforms = match args.platforms.is_empty() {
+        true => Platform::value_variants().to_vec(),
+        false => args.platforms,
+    };
+    let flavors: Vec<_> = match args.flavors.is_empty() {
+        true => Flavor::value_variants()
+            .iter()
+            .copied()
+            .filter(|flavor| flavor.offered_by(&version))
+            .collect(),
+        false => args.flavors,
+    };
+    if let Some(flavor) = flavors.iter().find(|flavor| !flavor.offered_by(&version)) {
+        fail(&format!("{version} can't build {}", name_of(*flavor)));
+    }
+    let variants = platforms.iter().flat_map(|&platform| {
+        flavors
+            .iter()
+            .map(move |&flavor| Variant { platform, flavor })
+    });
 
     let workspace = args.out.join(&version);
     let project = workspace.join("project");
@@ -378,12 +376,9 @@ fn main() {
     }
 
     let mut manifest = Vec::new();
-    for &variant in &args.variants {
+    for variant in variants {
         let name = variant.to_string();
         let flavor = variant.flavor;
-        if !flavor.offered_by(&version) {
-            fail(&format!("{name}: {version} can't build it"));
-        }
 
         // The runtime switch takes effect in a fresh editor session, so it
         // gets a run of its own before the build.

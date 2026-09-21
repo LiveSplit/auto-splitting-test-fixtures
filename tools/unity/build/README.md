@@ -30,12 +30,13 @@ The editor binary is `Editor/Unity.exe` under a Hub install on Windows, `Editor/
 | `-e` | `--editor` | **required** | Path to the editor binary |
 | | `--editor-version` | optional | Editor version, when the editor path does not name it |
 | `-o` | `--out` | **required** | Workspace to build into |
-| `-v` | `--variant` | optional | Build only these variants. Every variant builds without it |
+| `-p` | `--platform` | optional | Platforms to build for. Every platform without it |
+| `-f` | `--flavor` | optional | Flavors to build. Every flavor the editor offers without it |
 
-A variant is a platform, a scripting backend, and either the Mono scripting runtime or the IL2CPP C++ configuration. The platforms are `win-x64`, `win-x86`, `linux-x64` and `mac`. The Mono runtimes are `legacy`, the old runtime that ships as `mono.dll`, and `bdwgc`, the newer one built with the Boehm collector that ships as `mono-2.0-bdwgc.dll`. The IL2CPP configurations are `release` and `master`, which compile the runtime's own code differently, so a signature matched in one isn't matched in the other. That gives names like `win-x64-mono-legacy`, `win-x64-mono-bdwgc`, `win-x64-il2cpp-release` and `win-x64-il2cpp-master`, passed together or one flag at a time:
+A variant is a platform and a flavor. The platforms are `win-x64`, `win-x86`, `linux-x64` and `mac`. A flavor is the scripting backend with the Mono scripting runtime or the IL2CPP C++ configuration. `mono-legacy` is the old runtime that ships as `mono.dll`, and `mono-bdwgc` is the newer one built with the Boehm collector that ships as `mono-2.0-bdwgc.dll`. `il2cpp-release` and `il2cpp-master` compile the runtime's own code differently, so a signature matched in one isn't matched in the other. Every platform given is built with every flavor given, and the asset is named after both, like `win-x64-mono-bdwgc`. Without `-p` every platform is built, which needs every module installed. Without `-f` every flavor the editor offers is built. This builds 4 players:
 
 ```
-cargo run --release -- -e "/path/to/Unity.exe" -o /path/to/destination -v win-x64-mono-bdwgc linux-x64-il2cpp-release
+cargo run --release -- -e "/path/to/Unity.exe" -o /path/to/destination -p win-x64 linux-x64 -f mono-bdwgc il2cpp-release
 ```
 
 Switching the Mono runtime only takes effect in a fresh editor session, so the tool runs the editor once to switch it and once more to build.
