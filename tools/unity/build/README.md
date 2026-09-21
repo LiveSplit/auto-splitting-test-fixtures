@@ -11,9 +11,10 @@ Builds the fixture assets for one Unity version: one whole player per variant, z
 1. Install the editor version through Unity Hub.
 2. Add the build support module each variant needs. A Windows host builds its own Mono variants with the editor alone and needs a module for everything else: `Windows Build Support (IL2CPP)`, `Linux Build Support (Mono)`, `Linux Build Support (IL2CPP)`, `Mac Build Support (Mono)`, and `Mac Build Support (IL2CPP)`.
 3. Have a Rust toolchain; the tool builds with stable cargo.
-4. Keep about 4 GB free per version. A run of every variant on 6000.5.10f1 leaves 3.2 GB in the workspace: 1.9 GB of project, 1.1 GB of players, and 223 MB of assets, the only part worth keeping once a release is up.
+4. For x86 IL2CPP builds, have the Visual Studio 2019 Build Tools with the C++ workload and no newer MSVC toolset on the machine. MSVC 14.51 drops a guard in the garbage collector when it compiles for x86, and a player it links crashes before the game loads. 14.29 is the newest toolset measured good. Editors from 2021.2 on take the newest toolset they find anywhere, and editors before that take the newest install's own toolset, so a newer one present in any install gets picked. The tool reads the linker version out of every x86 `GameAssembly.dll` and fails the variant on 14.30 or newer.
+5. Keep about 4 GB free per version. A run of every variant on 6000.5.10f1 leaves 3.2 GB in the workspace: 1.9 GB of project, 1.1 GB of players, and 223 MB of assets, the only part worth keeping once a release is up.
 
-The x86 variants need an editor that still ships a 32-bit player; narrow `-v` on versions that dropped it. The same goes for the Mono runtimes: editors before 2017.1 only have the legacy one, editors from 2019.1 on only bdwgc, and the tool refuses the other one.
+The x86 variants need an editor that still ships a 32-bit player; leave `win-x86` out of `-p` on versions that dropped it. The same goes for the Mono runtimes: editors before 2017.1 only have the legacy one, editors from 2019.1 on only bdwgc, and the tool refuses the other one.
 
 ## Usage
 
