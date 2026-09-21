@@ -142,6 +142,14 @@ fn wanted_symbols(flavor: Flavor, name: &str) -> bool {
         .is_some_and(|stem| wanted_stem(flavor, stem))
 }
 
+/// Reads the version of the linker that wrote a PE file out of its
+/// optional header.
+fn linker_version(pe: &[u8]) -> Option<(u8, u8)> {
+    let at = u32::from_le_bytes(pe.get(0x3C..0x40)?.try_into().ok()?) as usize;
+    let optional = pe.get(at + 24..at + 28)?;
+    Some((optional[2], optional[3]))
+}
+
 /// The directory a build puts beside the player for the files a game does
 /// not ship, symbols among them.
 const NOT_SHIPPED: &str = "_BackUpThisFolder_ButDontShipItWithYourGame";
@@ -444,6 +452,22 @@ fn main() {
             ));
         }
 
+        // MSVC 14.51 drops a guard in the garbage collector's table walk
+        // when it compiles for x86, so a player it links crashes before
+        // the game loads. 14.29 is the newest toolset measured good.
+        if variant.platform == Platform::WinX86 && !flavor.is_mono() {
+            let assembly = fs::read(build_dir.join("GameAssembly.dll"))
+                .unwrap_or_else(|_| fail(&format!("{name}: GameAssembly.dll unreadable")));
+            let linker = linker_version(&assembly)
+                .unwrap_or_else(|| fail(&format!("{name}: GameAssembly.dll is no PE file")));
+            if linker >= (14, 30) {
+                fail(&format!(
+                    "{name}: GameAssembly.dll was linked by MSVC {}.{}; use a toolset below 14.30",
+                    linker.0, linker.1
+                ));
+            }
+        }
+
         // We leave the log out of the asset because it names the machine that
         // ran the build and when.
         let mut files = shipped;
@@ -474,4 +498,22 @@ fn main() {
         "{}",
         serde_json::to_string_pretty(&manifest).expect("rendering entries")
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::linker_version;
+
+    #[test]
+    fn the_linker_version_comes_from_the_optional_header() {
+        // A DOS header pointing at a PE signature, a COFF header, then the
+        // optional header with the linker version in its third and fourth
+        // bytes.
+        let mut pe = vec![0; 0x80];
+        pe[0x3C..0x40].copy_from_slice(&0x40u32.to_le_bytes());
+        pe[0x40..0x44].copy_from_slice(b"PE\0\0");
+        pe[0x40 + 24..0x40 + 28].copy_from_slice(&[0x0B, 0x01, 14, 29]);
+        assert_eq!(linker_version(&pe), Some((14, 29)));
+        assert_eq!(linker_version(&pe[..0x50]), None);
+    }
 }
