@@ -197,16 +197,16 @@
       "version": "2018.4.36f1",
       "variant": "win-x86-il2cpp-master",
       "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2018.4.36f1/unity-2018.4.36f1-win-x86-il2cpp-master.zip",
-      "size": 33182377,
-      "sha256": "8a2d915aab61a3c3c1a38b010e11d880aaae3ee16cf6c867cd82b13ff7d0137a"
+      "size": 25199769,
+      "sha256": "f3f5853c3ebe35f0bed5e44c093494052de8a0b48d8c3730fd5cd7b436d9997c"
     },
     {
       "engine": "unity",
       "version": "2018.4.36f1",
       "variant": "win-x86-il2cpp-release",
       "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2018.4.36f1/unity-2018.4.36f1-win-x86-il2cpp-release.zip",
-      "size": 32958902,
-      "sha256": "6c8a35ff47daaf09c2023b7bfdb9b0952ba611021368e61062f96e2517ec63aa"
+      "size": 25346966,
+      "sha256": "5dd5a4a0cf7a7225169a964cdc36142adb5f222675475f6947de0290fcf9361c"
     },
     {
       "engine": "unity",
@@ -261,16 +261,16 @@
       "version": "2019.1.0f2",
       "variant": "win-x86-il2cpp-master",
       "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2019.1.0f2/unity-2019.1.0f2-win-x86-il2cpp-master.zip",
-      "size": 29797455,
-      "sha256": "d82cfc78e088c60b8f543121d1117c36ecbc0b6a6f31036cb4067a3efacca4bd"
+      "size": 28469417,
+      "sha256": "4a5b96c311e104acaa04cd6b51a4ef484aacc84f6e16e93dce491dbc9c20e4c9"
     },
     {
       "engine": "unity",
       "version": "2019.1.0f2",
       "variant": "win-x86-il2cpp-release",
       "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2019.1.0f2/unity-2019.1.0f2-win-x86-il2cpp-release.zip",
-      "size": 29143661,
-      "sha256": "76fb97644ad301188cf53cec8da387b0a7af18d18e3b4d73df6204a3ec1f402d"
+      "size": 27997622,
+      "sha256": "6030e1b93b521ee988489b57b64754a0a8118c47b9557f436940c8b2e0d17f82"
     },
     {
       "engine": "unity",
@@ -309,16 +309,16 @@
       "version": "2020.2.0f1",
       "variant": "win-x86-il2cpp-master",
       "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2020.2.0f1/unity-2020.2.0f1-win-x86-il2cpp-master.zip",
-      "size": 35548294,
-      "sha256": "3f66634683ad4ff850c770b530305bf641f8457674576ce32e26b94c0f16cd0d"
+      "size": 34104063,
+      "sha256": "7931a16016c1420a46995094265c7b8eff035afe60926a26b248cd7bb619d281"
     },
     {
       "engine": "unity",
       "version": "2020.2.0f1",
       "variant": "win-x86-il2cpp-release",
       "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2020.2.0f1/unity-2020.2.0f1-win-x86-il2cpp-release.zip",
-      "size": 32072882,
-      "sha256": "ef885cdfb3716d3dd4d2b9bd1b5b792c05c23c43235325f579d62bd810680113"
+      "size": 30956131,
+      "sha256": "29803b5801ffe0d883e8be7e06bbf50c3a47ce80e187957b41884c6373ceab31"
     },
     {
       "engine": "unity",
@@ -477,16 +477,16 @@
       "version": "2022.3.0f1",
       "variant": "win-x86-il2cpp-master",
       "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2022.3.0f1/unity-2022.3.0f1-win-x86-il2cpp-master.zip",
-      "size": 35960225,
-      "sha256": "f895e1edff8579286eddbf2a47757a0762c9673ba536ae201f8249a9d5de8685"
+      "size": 34727217,
+      "sha256": "ad4de052904e61edec7f3b918daecfe606291325b447667607e16ee741534af3"
     },
     {
       "engine": "unity",
       "version": "2022.3.0f1",
       "variant": "win-x86-il2cpp-release",
       "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2022.3.0f1/unity-2022.3.0f1-win-x86-il2cpp-release.zip",
-      "size": 32960498,
-      "sha256": "6f2bd8a5f0131e2bd55588d2dc7b54c66971c6ab366b898ecccfd08cd3450ff2"
+      "size": 31694888,
+      "sha256": "9a01b6d80695fbdac195cea36fd1bd998b4036d81bcd3ce936797ef174bae2ed"
     },
     {
       "engine": "unity",
@@ -541,8 +541,8 @@
       "version": "2023.1.0f1",
       "variant": "win-x86-il2cpp-release",
       "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2023.1.0f1/unity-2023.1.0f1-win-x86-il2cpp-release.zip",
-      "size": 40321183,
-      "sha256": "44700d5f421e8598dfc957a274e071a9e9e760a51f0b621ac74143e73f9ec669"
+      "size": 38854786,
+      "sha256": "b98a864ed4271cca336ba9b109f429d655f37cd1c4900050cfa3f33c4defb898"
     },
     {
       "engine": "unity",
@@ -597,8 +597,8 @@
       "version": "2023.1.22f1",
       "variant": "win-x86-il2cpp-release",
       "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2023.1.22f1/unity-2023.1.22f1-win-x86-il2cpp-release.zip",
-      "size": 40405036,
-      "sha256": "f5773ea4ec5d4c4f9c6e7e1a06b5df5ea12732168bcbb4462c40648596d483cd"
+      "size": 38955055,
+      "sha256": "c98809138d1da719613cb36bb96d7e92e4258896e65ad927d37c048dbfc98409"
     },
     {
       "engine": "unity",
@@ -653,8 +653,8 @@
       "version": "6000.0.84f1",
       "variant": "win-x86-il2cpp-release",
       "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-6000.0.84f1/unity-6000.0.84f1-win-x86-il2cpp-release.zip",
-      "size": 46276331,
-      "sha256": "2e88fb66785d4b198be47ae114badfa4c01f67a0e74125c5d1553392df67354b"
+      "size": 44692992,
+      "sha256": "4c98ce92c57a22e1f5ed28f7e8572f495f0e5b26855d1cdb7e7a97a431db91b7"
     },
     {
       "engine": "unity",
@@ -693,8 +693,8 @@
       "version": "6000.1.17f1",
       "variant": "win-x86-il2cpp-release",
       "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-6000.1.17f1/unity-6000.1.17f1-win-x86-il2cpp-release.zip",
-      "size": 46014829,
-      "sha256": "0db8301b7751e61314114858e86eb08f77e287044458a39c1fb2a5885298b866"
+      "size": 44423154,
+      "sha256": "a24f4f5f9d25d0adcc3a44c2b882d8a33b8e69c97eb1a5f2b5a4cdc080205193"
     },
     {
       "engine": "unity",
@@ -749,8 +749,8 @@
       "version": "6000.2.12f1",
       "variant": "win-x86-il2cpp-release",
       "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-6000.2.12f1/unity-6000.2.12f1-win-x86-il2cpp-release.zip",
-      "size": 46884835,
-      "sha256": "c931197a8705bd7d56418cd4575cac2bb1249e6241acb0a60e40ac9b3d55c79f"
+      "size": 45312327,
+      "sha256": "3e0c95c72dc0f979d4fe91e08ddaf9886183b168b1f7ffc4256849d89d169624"
     },
     {
       "engine": "unity",
@@ -805,8 +805,8 @@
       "version": "6000.3.21f1",
       "variant": "win-x86-il2cpp-release",
       "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-6000.3.21f1/unity-6000.3.21f1-win-x86-il2cpp-release.zip",
-      "size": 45457033,
-      "sha256": "2a412269f318bc969a1d8d7c97261b0f90009a49651c7654daa0ed3136db99fb"
+      "size": 43915445,
+      "sha256": "b7e7645679129c4d315af432b868119b706f655a9e6d635c526e7187d6e3f6a6"
     },
     {
       "engine": "unity",
@@ -877,16 +877,16 @@
       "version": "6000.5.10f1",
       "variant": "win-x86-il2cpp-master",
       "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-6000.5.10f1/unity-6000.5.10f1-win-x86-il2cpp-master.zip",
-      "size": 53749499,
-      "sha256": "a3465ddba240b270196123d911091ee363cae3319432fe8f58e3ec859ca1d1e9"
+      "size": 52206073,
+      "sha256": "7e5548b2d55026d77bb259c2f871c35032c7f6760619db4e2d98e051ffb3d9dd"
     },
     {
       "engine": "unity",
       "version": "6000.5.10f1",
       "variant": "win-x86-il2cpp-release",
       "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-6000.5.10f1/unity-6000.5.10f1-win-x86-il2cpp-release.zip",
-      "size": 48750395,
-      "sha256": "13be28be6982fc2a52532278121b7466f000e6ea56501e42a549965c5b48da2f"
+      "size": 47085706,
+      "sha256": "e9ba5b2986878d4e4a6d6bc3d8e3376a9a7e3f91367fc417d2a924d59cb35ed8"
     },
     {
       "engine": "unity",
@@ -957,16 +957,16 @@
       "version": "6000.6.0f1",
       "variant": "win-x86-il2cpp-master",
       "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-6000.6.0f1/unity-6000.6.0f1-win-x86-il2cpp-master.zip",
-      "size": 51505876,
-      "sha256": "efa08193b4ea5b0ab84eb938a88ca8410eaddd60336905aaeebc093f8a236f15"
+      "size": 50155269,
+      "sha256": "c72ef4e64cff880ae44b3fe2311815cdcbb1b5fbb0f19477c1778367629500a5"
     },
     {
       "engine": "unity",
       "version": "6000.6.0f1",
       "variant": "win-x86-il2cpp-release",
       "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-6000.6.0f1/unity-6000.6.0f1-win-x86-il2cpp-release.zip",
-      "size": 46718534,
-      "sha256": "61bee773d3ce7a70af0744309bb296002a912564881e1572f34d2166315db14f"
+      "size": 45402595,
+      "sha256": "26dfd202d23f7bf6b052993fa25b016165e2e89f8b73ef87bdd66836aec030ae"
     },
     {
       "engine": "unity",
