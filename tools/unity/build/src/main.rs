@@ -3,7 +3,7 @@
 //! paste into manifest.json.
 
 use std::{
-    fmt, fs,
+    fmt, fs, io,
     io::Write,
     path::{Path, PathBuf},
     process::{self, Command},
@@ -217,6 +217,28 @@ fn archive(files: &[(String, PathBuf)], asset: &Path) -> (u64, String) {
     zip.finish().expect("finishing the asset");
 
     let bytes = fs::read(asset).expect("re-reading the asset");
+
+    // We open the zip we just wrote and read every file in it. If a run
+    // dies while it writes, we end up with half a zip, and the size and
+    // hash we print for that half zip look just like the size and hash of
+    // a whole zip.
+    let mut written = zip::ZipArchive::new(io::Cursor::new(&bytes))
+        .unwrap_or_else(|error| fail(&format!("{} does not read back: {error}", asset.display())));
+    if written.len() != files.len() {
+        fail(&format!(
+            "{} holds {} files, the build had {}",
+            asset.display(),
+            written.len(),
+            files.len(),
+        ));
+    }
+    for index in 0..written.len() {
+        let mut entry = written.by_index(index).expect("a zip entry");
+        io::copy(&mut entry, &mut io::sink()).unwrap_or_else(|error| {
+            fail(&format!("{} in {}: {error}", entry.name(), asset.display()))
+        });
+    }
+
     (bytes.len() as u64, format!("{:x}", Sha256::digest(&bytes)))
 }
 
