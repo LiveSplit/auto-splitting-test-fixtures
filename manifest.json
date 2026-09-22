@@ -221,8 +221,8 @@
       "version": "2019.1.0f2",
       "variant": "linux-x64-mono-bdwgc",
       "asset": "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download/unity-2019.1.0f2/unity-2019.1.0f2-linux-x64-mono-bdwgc.zip",
-      "size": 15681454,
-      "sha256": "668e0e1ce9f025477dc18e23dd5ac328ae17962561f1f609d09a2cd74b4751c4"
+      "size": 21162023,
+      "sha256": "a7bccd256039cd18220f16172a156c41c987368338ba90948ef9327db1135950"
     },
     {
       "engine": "unity",
