@@ -60,7 +60,7 @@ The tool sets up a fresh project once by copying `assets/` into it: the two scen
 
 ## The fixture
 
-[`unity-fixture.json`](../../../unity-fixture.json) at the root of the repo lists what the player holds: two scenes, the objects in them with their names, parents and active flags, and the values that the `FixtureData` script sets once in `Awake`. Nothing moves or ticks, so a run reads the same at any point.
+[`unity-fixture.json`](../../../unity-fixture.json) at the root of the repo lists what the player holds: two scenes, the objects in them with their names, parents and active flags, and the values that the `FixtureData` script sets once in `Awake`. The roots of a scene are listed in the order the scene keeps them. Nothing moves or ticks, so a run reads the same at any point.
 
 ## What goes in an asset
 
