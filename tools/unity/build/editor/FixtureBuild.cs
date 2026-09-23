@@ -129,6 +129,10 @@ public static class FixtureBuild
         hidden.transform.SetParent(baz.transform);
         quux.transform.SetParent(hidden.transform);
 
+        // A second root after Foo, so a reader can tell the order the roots
+        // come back in. Its name carries on the series the tree uses.
+        new GameObject("Corge");
+
         qux.AddComponent<Marker>();
 
         // Quux stays active under Hidden, which is inactive. That way there is
