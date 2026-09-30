@@ -1,48 +1,76 @@
 # unity-fixtures
 
-Builds the fixture assets for one Unity version: one whole player per variant, zipped and hashed. It prints the manifest entries to paste into `manifest.json`.
+Builds the fixture assets for one Unity version: one whole player per variant, zipped and hashed, plus the manifest entries to paste into `manifest.json`.
 
-> [!IMPORTANT]  
-> Mac IL2CPP is missing.  
-> It needs a host with the module installed; every other variant is verified.
+> [!IMPORTANT]
+> Mac IL2CPP is missing. It needs a Mac host with the module installed. Every other variant is verified.
 
-## Setup
-
-1. Install the editor version through Unity Hub.
-2. Add the build support module each variant needs. A Windows host builds its own Mono variants with the editor alone and needs a module for everything else: `Windows Build Support (IL2CPP)`, `Linux Build Support (Mono)`, `Linux Build Support (IL2CPP)`, `Mac Build Support (Mono)`, and `Mac Build Support (IL2CPP)`.
-3. Have a Rust toolchain; the tool builds with stable cargo.
-4. For IL2CPP builds on Windows, add "MSVC v142 - VS 2019 C++ x64/x86 build tools (v14.29)" to any Visual Studio install. Toolsets from 14.30 on build x86 players that crash before the game loads, and on 2022.2 they don't compile at all. For editors from 2021.2 on, the tool picks the newest toolset below 14.30 by itself, so newer toolsets can stay installed. Editors before 2021.2 take the toolset listed in their install's `VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt`, so that file has to hold the 14.29 toolset's version. The tool reads the linker version out of every x86 `GameAssembly.dll` and fails the variant on 14.30 or newer.
-5. Keep about 4 GB free per version. A run of every variant on 6000.5.10f1 leaves 3.2 GB in the workspace: 1.9 GB of project, 1.1 GB of players, and 223 MB of assets, the only part worth keeping once a release is up.
-
-The x86 variants need an editor that still ships a 32-bit player; leave `win-x86` out of `-p` on versions that dropped it. The same goes for the Mono runtimes: editors before 2017.1 only have the legacy one, editors from 2019.1 on only bdwgc, and the tool refuses the other one.
-
-## Usage
+## Quick start
 
 From `tools/unity/build`:
 
 ```
-cargo run --release -- -e "/path/to/Unity/Hub/Editor/6000.5.10f1/Editor/Unity.exe" -o /path/to/destination
+cargo run --release -- -e "C:/Unity/6000.5.10f1/Editor/Unity.exe" -o D:/fixtures
 ```
 
-The editor binary is `Editor/Unity.exe` under a Hub install on Windows, `Editor/Unity` on Linux, and `Unity.app/Contents/MacOS/Unity` on macOS.
+That builds every variant the editor has modules for and writes the assets to `D:/fixtures/6000.5.10f1/`. It prints which variants it skipped and which module each one needs. The last thing it prints is the manifest entries.
 
-| | | | |
+To build only some variants, list the platforms and flavors:
+
+```
+cargo run --release -- -e "C:/Unity/6000.5.10f1/Editor/Unity.exe" -o D:/fixtures -p win-x64 linux-x64 -f mono-bdwgc il2cpp-release
+```
+
+That builds 4 players: every platform given with every flavor given.
+
+## What you need
+
+| To build | Install |
+|---|---|
+| Anything | The editor version through Unity Hub, and a stable Rust toolchain |
+| Windows Mono | Nothing else, a Windows host has it |
+| Windows IL2CPP | The "Windows Build Support (IL2CPP)" module, and "MSVC v142 - VS 2019 C++ x64/x86 build tools (Latest)" in any Visual Studio install |
+| Linux | The "Linux Build Support (Mono)" or "(IL2CPP)" module |
+| Mac Mono | The "Mac Build Support (Mono)" module |
+| Mac IL2CPP | A Mac host |
+
+Keep about 4 GB free per version. A run of every variant on 6000.5.10f1 leaves 3.2 GB: 1.9 GB of project, 1.1 GB of players, and 223 MB of assets, the only part worth keeping once a release is up.
+
+## Options
+
+| Short | Long | | What it does |
 |---|---|---|---|
-| `-e` | `--editor` | **required** | Path to the editor binary |
-| | `--editor-version` | optional | Editor version, when the editor path does not name it |
-| `-o` | `--out` | **required** | Workspace to build into |
-| `-p` | `--platform` | optional | Platforms to build for. Every platform without it |
-| `-f` | `--flavor` | optional | Flavors to build. Every flavor the editor offers without it |
+| `-e` | `--editor` | **required** | Path to the editor binary: `Editor/Unity.exe` under a Hub install on Windows, `Editor/Unity` on Linux, `Unity.app/Contents/MacOS/Unity` on macOS |
+| `-o` | `--out` | **required** | Folder to build into. Each version gets its own folder inside |
+| `-p` | `--platform` | optional | `win-x64`, `win-x86`, `linux-x64`, `mac`. Without it, every platform the editor has the module for |
+| `-f` | `--flavor` | optional | `mono-legacy`, `mono-bdwgc`, `il2cpp-release`, `il2cpp-master`. Without it, every flavor the editor offers |
+| | `--editor-version` | optional | The editor version, for when the editor path doesn't show it |
 
-A variant is a platform and a flavor. The platforms are `win-x64`, `win-x86`, `linux-x64` and `mac`. A flavor is the scripting backend with the Mono scripting runtime or the IL2CPP C++ configuration. `mono-legacy` is the old runtime that ships as `mono.dll`, and `mono-bdwgc` is the newer one built with the Boehm collector that ships as `mono-2.0-bdwgc.dll`. `il2cpp-release` and `il2cpp-master` compile the runtime's own code differently, so a signature matched in one isn't matched in the other. Every platform given is built with every flavor given, and the asset is named after both, like `win-x64-mono-bdwgc`. Without `-p` every platform is built, which needs every module installed. Without `-f` every flavor the editor offers is built. This builds 4 players:
+## Variants
 
-```
-cargo run --release -- -e "/path/to/Unity.exe" -o /path/to/destination -p win-x64 linux-x64 -f mono-bdwgc il2cpp-release
-```
+A variant is a platform and a flavor, like `win-x64-mono-bdwgc`. The flavor is the scripting backend plus what varies inside it:
 
-Switching the Mono runtime only takes effect in a fresh editor session, so the tool runs the editor once to switch it and once more to build.
+| Flavor | What it is | Editors |
+|---|---|---|
+| `mono-legacy` | The old Mono runtime, `mono.dll` | before 2019.1 |
+| `mono-bdwgc` | The newer Mono runtime built with the Boehm collector, `mono-2.0-bdwgc.dll` | 2017.1 on |
+| `il2cpp-release` | IL2CPP with the Release C++ configuration | every editor with the module |
+| `il2cpp-master` | IL2CPP with the Master C++ configuration, which compiles the runtime differently, so a signature matched in one isn't matched in the other | 2018.3 on |
 
-The workspace holds one directory per version. Inside it, `project/` is a throwaway project reused across runs, each variant builds into its own directory, and the assets are written next to them:
+The x86 variants need an editor that still ships a 32-bit player. The tool refuses a flavor the editor doesn't offer, and a variant given with `-p` or `-f` whose module isn't installed.
+
+## MSVC toolsets
+
+Toolsets from 14.30 on build x86 IL2CPP players that crash before the game loads, and on 2022.2 they don't compile at all. 14.29 is the newest toolset known to work.
+
+- Editors from 2021.2 on: the tool picks the newest toolset below 14.30 by itself, so newer toolsets can stay installed.
+- Editors before 2021.2: the editor takes the toolset listed in the Visual Studio install's `VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt`, so that file has to hold the 14.29 toolset's version.
+
+The tool also reads the linker version out of every x86 `GameAssembly.dll` and fails the variant on 14.30 or newer.
+
+## The workspace
+
+Each version gets one folder. `project/` is a throwaway project reused across runs, each variant builds into its own folder, and the assets and logs sit next to them:
 
 ```
 <out>/6000.5.10f1/
@@ -52,11 +80,15 @@ The workspace holds one directory per version. Inside it, `project/` is a throwa
 └── unity-6000.5.10f1-win-x64-mono-bdwgc.log
 ```
 
-Every editor run keeps its log beside what it produced. The log opens with the command line it ran, so it records what produced the asset. The run prints how long each build took and ends with the manifest entries.
+Every editor run keeps its log beside what it produced. The log opens with the command line the editor ran, so it shows what produced the asset.
 
-The editor does the building: `editor/FixtureBuild.cs` is copied into the throwaway project and invoked through `-executeMethod`, taking the output path and scripting backend as arguments.
+## How it builds
 
-The tool sets up a fresh project once by copying `assets/` into it: the two scenes, the scripts and their `.meta` files, so every asset keeps the GUID it was written with. Then `FixtureBuild.Prepare` turns on text serialization and turns off audio. The scenes were written by 5.6.7f1, and every later editor upgrades them when it imports them. If they ever need to change, `FixtureBuild.CreateScenes` writes them again from the oldest editor.
+The editor does the building. The tool copies `editor/FixtureBuild.cs` into the project and runs it through `-executeMethod`.
+
+A fresh project gets `assets/` copied in once: the two scenes, the scripts and their `.meta` files, so every asset keeps the GUID it was written with. `FixtureBuild.Prepare` then turns on text serialization and turns off audio. The scenes were written by 5.6.7f1, and every later editor upgrades them when it imports them. If they ever need to change, `FixtureBuild.CreateScenes` writes them again from the oldest editor.
+
+Switching the Mono runtime only takes effect in a fresh editor session, so on editors from 2017.1 through 2018.4 the tool runs the editor once to switch it and once more to build.
 
 ## The fixture
 
