@@ -14,6 +14,8 @@ use clap::{Parser, ValueEnum};
 use sha2::{Digest, Sha256};
 use zip::{write::SimpleFileOptions, ZipWriter};
 
+mod toolset;
+
 const RELEASES: &str =
     "https://github.com/LiveSplit/auto-splitting-test-fixtures/releases/download";
 
@@ -203,6 +205,7 @@ fn prepare(editor: &Path, workspace: &Path, project: &Path, tool: &Path, version
         editor,
         &workspace.join("prepare.log"),
         &Run::Prepare.args(project, version),
+        &[],
     );
 }
 
@@ -285,9 +288,10 @@ impl Run<'_> {
 /// Runs the editor with its log kept beside whatever it produces. The log
 /// carries the build report and the engine's own version lines, which is
 /// what says how an asset came to be.
-fn run_editor(editor: &Path, log: &Path, args: &[String]) -> Duration {
+fn run_editor(editor: &Path, log: &Path, args: &[String], env: &[(&str, &Path)]) -> Duration {
     let mut command = Command::new(editor);
     command
+        .envs(env.iter().copied())
         .args(["-batchmode", "-nographics", "-quit"])
         .args(["-logFile", &log.to_string_lossy()])
         .args(args);
@@ -390,6 +394,7 @@ fn main() {
             &args.editor,
             &workspace.join("create-project.log"),
             &Run::CreateProject.args(&project, &version),
+            &[],
         );
     }
 
@@ -419,11 +424,17 @@ fn main() {
                 &args.editor,
                 &workspace.join(format!("runtime-{}.log", name_of(flavor))),
                 &Run::SetRuntime(variant).args(&project, &version),
+                &[],
             );
         }
 
         let build_dir = workspace.join(&name);
         let log = workspace.join(format!("unity-{version}-{name}.log"));
+        let tools = toolset::for_variant(&version, variant, &workspace, &project);
+        let env: Vec<(&str, &Path)> = tools
+            .iter()
+            .map(|tools| ("VS160COMNTOOLS", tools.as_path()))
+            .collect();
         let took = run_editor(
             &args.editor,
             &log,
@@ -432,6 +443,7 @@ fn main() {
                 out: &build_dir,
             }
             .args(&project, &version),
+            &env,
         );
 
         let mut built = Vec::new();
