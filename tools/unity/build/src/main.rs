@@ -63,7 +63,9 @@ impl Flavor {
         match self {
             Flavor::MonoLegacy => major_minor(version) < (2019, 1),
             Flavor::MonoBdwgc => major_minor(version) >= (2017, 1),
-            _ => true,
+            // The Master configuration arrives in 2018.3.
+            Flavor::Il2cppMaster => major_minor(version) >= (2018, 3),
+            Flavor::Il2cppRelease => true,
         }
     }
 
@@ -524,7 +526,15 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::linker_version;
+    use super::{linker_version, Flavor};
+
+    #[test]
+    fn il2cpp_master_starts_at_2018_3() {
+        assert!(!Flavor::Il2cppMaster.offered_by("2018.1.0f1"));
+        assert!(!Flavor::Il2cppMaster.offered_by("2018.2.21f1"));
+        assert!(Flavor::Il2cppMaster.offered_by("2018.3.0f2"));
+        assert!(Flavor::Il2cppRelease.offered_by("2018.1.0f1"));
+    }
 
     #[test]
     fn the_linker_version_comes_from_the_optional_header() {
