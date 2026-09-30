@@ -543,6 +543,7 @@ fn main() {
         files.extend(
             built
                 .iter()
+                .filter(|(relative, _)| relative.contains(NOT_SHIPPED))
                 .filter(|(relative, _)| wanted_symbols(backend, &last(relative)))
                 .cloned(),
         );
