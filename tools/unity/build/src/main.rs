@@ -53,7 +53,7 @@ impl Platform {
 /// player's C++ configuration changes its compiled code, which matters to
 /// anyone matching signatures in it.
 #[derive(Copy, Clone, PartialEq, Eq, ValueEnum)]
-enum Flavor {
+enum Backend {
     /// The old Mono runtime, mono.dll. Editors before 2019.1
     MonoLegacy,
     /// The Mono runtime built with the Boehm collector, mono-2.0-bdwgc.dll. Editors from 2017.1 on
@@ -64,19 +64,19 @@ enum Flavor {
     Il2cppMaster,
 }
 
-impl Flavor {
+impl Backend {
     fn is_mono(self) -> bool {
-        matches!(self, Flavor::MonoLegacy | Flavor::MonoBdwgc)
+        matches!(self, Backend::MonoLegacy | Backend::MonoBdwgc)
     }
 
-    /// Whether the editor can build this flavor at all.
+    /// Whether the editor can build this backend at all.
     fn offered_by(self, version: &str) -> bool {
         match self {
-            Flavor::MonoLegacy => major_minor(version) < (2019, 1),
-            Flavor::MonoBdwgc => major_minor(version) >= (2017, 1),
+            Backend::MonoLegacy => major_minor(version) < (2019, 1),
+            Backend::MonoBdwgc => major_minor(version) >= (2017, 1),
             // The Master configuration arrives in 2018.3.
-            Flavor::Il2cppMaster => major_minor(version) >= (2018, 3),
-            Flavor::Il2cppRelease => true,
+            Backend::Il2cppMaster => major_minor(version) >= (2018, 3),
+            Backend::Il2cppRelease => true,
         }
     }
 
@@ -87,13 +87,13 @@ impl Flavor {
     }
 }
 
-/// One variant of a version, named `<platform>-<flavor>`, such as
+/// One variant of a version, written `<platform>-<backend>`, such as
 /// `win-x64-mono-bdwgc` or `linux-x64-il2cpp-release`. The build script
-/// gets the name and reads the flavor back out of it.
+/// gets the name and reads the backend back out of it.
 #[derive(Copy, Clone, PartialEq, Eq)]
 struct Variant {
     platform: Platform,
-    flavor: Flavor,
+    backend: Backend,
 }
 
 fn name_of<T: ValueEnum>(value: T) -> String {
@@ -106,7 +106,7 @@ fn name_of<T: ValueEnum>(value: T) -> String {
 
 impl fmt::Display for Variant {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}-{}", name_of(self.platform), name_of(self.flavor))
+        write!(f, "{}-{}", name_of(self.platform), name_of(self.backend))
     }
 }
 
@@ -128,8 +128,8 @@ fn stem(name: &str) -> &str {
 /// gives them: the player binary always, the runtime library on Mono, the
 /// game assembly and the metadata file on IL2CPP. An asset holds the whole
 /// build, and it must hold these.
-fn wanted_stem(flavor: Flavor, stem: &str) -> bool {
-    if flavor.is_mono() {
+fn wanted_stem(backend: Backend, stem: &str) -> bool {
+    if backend.is_mono() {
         matches!(
             stem,
             "UnityPlayer"
@@ -146,13 +146,13 @@ fn wanted_stem(flavor: Flavor, stem: &str) -> bool {
 
 /// The symbols belonging to a file the tests read, as a PDB on Windows or
 /// separated debug info elsewhere. IL2CPP compiles the runtime's own
-/// structures into the game assembly, so its symbols name the layouts a
+/// structures into the game assembly, so its symbols hold the layouts a
 /// walk over that build has to know.
-fn wanted_symbols(flavor: Flavor, name: &str) -> bool {
+fn wanted_symbols(backend: Backend, name: &str) -> bool {
     name.strip_suffix(".pdb")
         .or_else(|| name.strip_suffix(".debug"))
         .map(|stem| stem.strip_suffix("_s").unwrap_or(stem))
-        .is_some_and(|stem| wanted_stem(flavor, stem))
+        .is_some_and(|stem| wanted_stem(backend, stem))
 }
 
 /// Reads the version of the linker that wrote a PE file out of its
@@ -295,8 +295,8 @@ impl Run<'_> {
 }
 
 /// Runs the editor with its log kept beside whatever it produces. The log
-/// carries the build report and the engine's own version lines, which is
-/// what says how an asset came to be.
+/// carries the build report and the engine's own version lines, which
+/// show what produced an asset.
 fn run_editor(editor: &Path, log: &Path, args: &[String], env: &[(&str, &Path)]) -> Duration {
     let mut command = Command::new(editor);
     command
@@ -334,8 +334,8 @@ fn version_from(editor: &Path) -> Option<String> {
   Every variant the editor has modules for:
     unity-fixtures -e C:/Unity/6000.5.10f1/Editor/Unity.exe -o D:/fixtures
 
-  4 players, every platform given with every flavor given:
-    unity-fixtures -e C:/Unity/6000.5.10f1/Editor/Unity.exe -o D:/fixtures -p win-x64 linux-x64 -f mono-bdwgc il2cpp-release")]
+  4 players, every platform given with every backend given:
+    unity-fixtures -e C:/Unity/6000.5.10f1/Editor/Unity.exe -o D:/fixtures -p win-x64 linux-x64 -b mono-bdwgc il2cpp-release")]
 struct Args {
     /// Path to the editor binary: Editor/Unity.exe under a Hub install on
     /// Windows, Editor/Unity on Linux, Unity.app/Contents/MacOS/Unity on macOS
@@ -357,9 +357,9 @@ struct Args {
     #[arg(short, long = "platform", num_args = 1.., value_name = "PLATFORM")]
     platforms: Vec<Platform>,
 
-    /// Flavors to build. Without it, every flavor the editor offers
-    #[arg(short, long = "flavor", num_args = 1.., value_name = "FLAVOR")]
-    flavors: Vec<Flavor>,
+    /// Backends to build. Without it, every backend the editor offers
+    #[arg(short, long = "backend", num_args = 1.., value_name = "BACKEND")]
+    backends: Vec<Backend>,
 }
 
 /// The major and minor of a Unity version such as `2019.4.41f2`.
@@ -379,31 +379,34 @@ fn main() {
     let version = args
         .editor_version
         .or_else(|| version_from(&args.editor))
-        .unwrap_or_else(|| fail("editor path names no version, pass --editor-version"));
+        .unwrap_or_else(|| fail("the editor path doesn't hold a version, pass --editor-version"));
 
-    // Variants given with -p or -f have to build. Without either, a variant
+    // Variants given with -p or -b have to build. Without either, a variant
     // whose module is missing is skipped with the reason.
-    let given = !args.platforms.is_empty() || !args.flavors.is_empty();
+    let given = !args.platforms.is_empty() || !args.backends.is_empty();
     let platforms = match args.platforms.is_empty() {
         true => Platform::value_variants().to_vec(),
         false => args.platforms,
     };
-    let flavors: Vec<_> = match args.flavors.is_empty() {
-        true => Flavor::value_variants()
+    let backends: Vec<_> = match args.backends.is_empty() {
+        true => Backend::value_variants()
             .iter()
             .copied()
-            .filter(|flavor| flavor.offered_by(&version))
+            .filter(|backend| backend.offered_by(&version))
             .collect(),
-        false => args.flavors,
+        false => args.backends,
     };
-    if let Some(flavor) = flavors.iter().find(|flavor| !flavor.offered_by(&version)) {
-        fail(&format!("{version} can't build {}", name_of(*flavor)));
+    if let Some(backend) = backends
+        .iter()
+        .find(|backend| !backend.offered_by(&version))
+    {
+        fail(&format!("{version} can't build {}", name_of(*backend)));
     }
     let mut variants = Vec::new();
     for &platform in &platforms {
-        for &flavor in &flavors {
-            let variant = Variant { platform, flavor };
-            match modules::missing(&args.editor, platform, flavor) {
+        for &backend in &backends {
+            let variant = Variant { platform, backend };
+            match modules::missing(&args.editor, platform, backend) {
                 None => variants.push(variant),
                 Some(reason) if given => fail(&format!("can't build {variant}: {reason}")),
                 Some(reason) => println!("skipping {variant}: {reason}"),
@@ -445,14 +448,14 @@ fn main() {
     let mut manifest = Vec::new();
     for variant in variants {
         let name = variant.to_string();
-        let flavor = variant.flavor;
+        let backend = variant.backend;
 
         // The runtime switch takes effect in a fresh editor session, so it
         // gets a run of its own before the build.
-        if flavor.is_mono() && Flavor::toggles_runtime(&version) {
+        if backend.is_mono() && Backend::toggles_runtime(&version) {
             run_editor(
                 &args.editor,
-                &workspace.join(format!("runtime-{}.log", name_of(flavor))),
+                &workspace.join(format!("runtime-{}.log", name_of(backend))),
                 &Run::SetRuntime(variant).args(&project, &version),
                 &[],
             );
@@ -494,7 +497,7 @@ fn main() {
         // Players from before the engine split one out are monolithic, on
         // Windows and Mac until 2017 and on Linux until 2019: no UnityPlayer
         // library exists, and the executable itself is the player.
-        let names_a_player = |stem: &str| stem == "UnityPlayer" || stem == "fixture";
+        let is_player = |stem: &str| stem == "UnityPlayer" || stem == "fixture";
 
         // By role, not by count: a duplicate match for one role must not
         // stand in for another role's absence.
@@ -504,9 +507,9 @@ fn main() {
                 role(stem(&name))
             })
         };
-        let complete = holds(&names_a_player)
-            && if flavor.is_mono() {
-                holds(&|stem| wanted_stem(flavor, stem) && !names_a_player(stem))
+        let complete = holds(&is_player)
+            && if backend.is_mono() {
+                holds(&|stem| wanted_stem(backend, stem) && !is_player(stem))
             } else {
                 holds(&|stem| stem == "GameAssembly")
                     && holds(&|stem| stem == "global-metadata.dat")
@@ -521,7 +524,7 @@ fn main() {
         // MSVC 14.51 drops a guard in the garbage collector's table walk
         // when it compiles for x86, so a player it links crashes before
         // the game loads. 14.29 is the newest toolset measured good.
-        if variant.platform == Platform::WinX86 && !flavor.is_mono() {
+        if variant.platform == Platform::WinX86 && !backend.is_mono() {
             let assembly = fs::read(build_dir.join("GameAssembly.dll"))
                 .unwrap_or_else(|_| fail(&format!("{name}: GameAssembly.dll unreadable")));
             let linker = linker_version(&assembly)
@@ -534,13 +537,13 @@ fn main() {
             }
         }
 
-        // We leave the log out of the asset because it names the machine that
+        // We leave the log out of the asset because it holds the machine that
         // ran the build and when.
         let mut files = shipped;
         files.extend(
             built
                 .iter()
-                .filter(|(relative, _)| wanted_symbols(flavor, &last(relative)))
+                .filter(|(relative, _)| wanted_symbols(backend, &last(relative)))
                 .cloned(),
         );
 
@@ -568,14 +571,14 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::{linker_version, modules::has_players, Flavor, Platform};
+    use super::{linker_version, modules::has_players, Backend, Platform};
 
     #[test]
     fn il2cpp_master_starts_at_2018_3() {
-        assert!(!Flavor::Il2cppMaster.offered_by("2018.1.0f1"));
-        assert!(!Flavor::Il2cppMaster.offered_by("2018.2.21f1"));
-        assert!(Flavor::Il2cppMaster.offered_by("2018.3.0f2"));
-        assert!(Flavor::Il2cppRelease.offered_by("2018.1.0f1"));
+        assert!(!Backend::Il2cppMaster.offered_by("2018.1.0f1"));
+        assert!(!Backend::Il2cppMaster.offered_by("2018.2.21f1"));
+        assert!(Backend::Il2cppMaster.offered_by("2018.3.0f2"));
+        assert!(Backend::Il2cppRelease.offered_by("2018.1.0f1"));
     }
 
     // Variations folders as the 2018.1.0f1 and 2022.2.0f1 editors ship them.
@@ -589,13 +592,13 @@ mod tests {
         ];
         let old = old.map(String::from);
         let new = new.map(String::from);
-        assert!(has_players(&old, Platform::WinX86, Flavor::MonoLegacy));
-        assert!(has_players(&old, Platform::WinX64, Flavor::Il2cppRelease));
-        assert!(!has_players(&old, Platform::WinX86, Flavor::Il2cppRelease));
-        assert!(has_players(&new, Platform::WinX64, Flavor::MonoBdwgc));
-        assert!(has_players(&new, Platform::LinuxX64, Flavor::Il2cppMaster));
-        assert!(!has_players(&new, Platform::LinuxX64, Flavor::MonoBdwgc));
-        assert!(!has_players(&new, Platform::WinX86, Flavor::MonoBdwgc));
+        assert!(has_players(&old, Platform::WinX86, Backend::MonoLegacy));
+        assert!(has_players(&old, Platform::WinX64, Backend::Il2cppRelease));
+        assert!(!has_players(&old, Platform::WinX86, Backend::Il2cppRelease));
+        assert!(has_players(&new, Platform::WinX64, Backend::MonoBdwgc));
+        assert!(has_players(&new, Platform::LinuxX64, Backend::Il2cppMaster));
+        assert!(!has_players(&new, Platform::LinuxX64, Backend::MonoBdwgc));
+        assert!(!has_players(&new, Platform::WinX86, Backend::MonoBdwgc));
     }
 
     #[test]

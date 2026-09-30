@@ -4,28 +4,28 @@
 
 use std::{fs, path::Path};
 
-use crate::{Flavor, Platform};
+use crate::{Backend, Platform};
 
 /// Checks whether a list of player variations holds one for the platform
-/// and the flavor's backend.
-pub(crate) fn has_players(variations: &[String], platform: Platform, flavor: Flavor) -> bool {
+/// and the backend.
+pub(crate) fn has_players(variations: &[String], platform: Platform, backend: Backend) -> bool {
     let prefixes: &[&str] = match platform {
         Platform::WinX64 => &["win64"],
         Platform::WinX86 => &["win32"],
         Platform::LinuxX64 => &["linux64"],
         Platform::Mac => &["mac", "universal"],
     };
-    let backend = if flavor.is_mono() { "mono" } else { "il2cpp" };
+    let runtime = if backend.is_mono() { "mono" } else { "il2cpp" };
     variations.iter().any(|variation| {
         prefixes.iter().any(|prefix| variation.starts_with(prefix))
             && variation.contains("nondevelopment")
-            && variation.ends_with(backend)
+            && variation.ends_with(runtime)
     })
 }
 
 /// Finds the Unity Hub module a variant needs.
-fn module(platform: Platform, flavor: Flavor) -> &'static str {
-    match (platform, flavor.is_mono()) {
+fn module(platform: Platform, backend: Backend) -> &'static str {
+    match (platform, backend.is_mono()) {
         (Platform::WinX64 | Platform::WinX86, true) => "Windows Build Support (Mono)",
         (Platform::WinX64 | Platform::WinX86, false) => "Windows Build Support (IL2CPP)",
         (Platform::LinuxX64, true) => "Linux Build Support (Mono)",
@@ -37,8 +37,8 @@ fn module(platform: Platform, flavor: Flavor) -> &'static str {
 
 /// Returns why the editor can't build a variant, or none when it can.
 /// An editor laid out in a way this doesn't know is taken at its word.
-pub(crate) fn missing(editor: &Path, platform: Platform, flavor: Flavor) -> Option<String> {
-    if platform == Platform::Mac && !flavor.is_mono() && !cfg!(target_os = "macos") {
+pub(crate) fn missing(editor: &Path, platform: Platform, backend: Backend) -> Option<String> {
+    if platform == Platform::Mac && !backend.is_mono() && !cfg!(target_os = "macos") {
         return Some("Mac IL2CPP players only build on a Mac".into());
     }
 
@@ -71,7 +71,7 @@ pub(crate) fn missing(editor: &Path, platform: Platform, flavor: Flavor) -> Opti
             let names: Vec<String> = variations
                 .filter_map(|entry| Some(entry.ok()?.file_name().to_string_lossy().into_owned()))
                 .collect();
-            has_players(&names, platform, flavor)
+            has_players(&names, platform, backend)
         })
         .unwrap_or(false);
 
@@ -79,7 +79,7 @@ pub(crate) fn missing(editor: &Path, platform: Platform, flavor: Flavor) -> Opti
         format!(
             "the \"{}\" module isn't installed for this editor; add it in Unity Hub under the \
              editor's Add modules",
-            module(platform, flavor)
+            module(platform, backend)
         )
     })
 }

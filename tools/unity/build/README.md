@@ -15,13 +15,13 @@ cargo run --release -- -e "C:/Unity/6000.5.10f1/Editor/Unity.exe" -o D:/fixtures
 
 That builds every variant the editor has modules for and writes the assets to `D:/fixtures/6000.5.10f1/`. It prints which variants it skipped and which module each one needs. The last thing it prints is the manifest entries.
 
-To build only some variants, list the platforms and flavors:
+To build only some variants, list the platforms and backends:
 
 ```
-cargo run --release -- -e "C:/Unity/6000.5.10f1/Editor/Unity.exe" -o D:/fixtures -p win-x64 linux-x64 -f mono-bdwgc il2cpp-release
+cargo run --release -- -e "C:/Unity/6000.5.10f1/Editor/Unity.exe" -o D:/fixtures -p win-x64 linux-x64 -b mono-bdwgc il2cpp-release
 ```
 
-That builds 4 players: every platform given with every flavor given.
+That builds 4 players: every platform given with every backend given.
 
 ## What you need
 
@@ -43,21 +43,21 @@ Keep about 4 GB free per version. A run of every variant on 6000.5.10f1 leaves 3
 | `-e` | `--editor` | **required** | Path to the editor binary: `Editor/Unity.exe` under a Hub install on Windows, `Editor/Unity` on Linux, `Unity.app/Contents/MacOS/Unity` on macOS |
 | `-o` | `--out` | **required** | Folder to build into. Each version gets its own folder inside |
 | `-p` | `--platform` | optional | `win-x64`, `win-x86`, `linux-x64`, `mac`. Without it, every platform the editor has the module for |
-| `-f` | `--flavor` | optional | `mono-legacy`, `mono-bdwgc`, `il2cpp-release`, `il2cpp-master`. Without it, every flavor the editor offers |
+| `-b` | `--backend` | optional | `mono-legacy`, `mono-bdwgc`, `il2cpp-release`, `il2cpp-master`. Without it, every backend the editor offers |
 | | `--editor-version` | optional | The editor version, for when the editor path doesn't show it |
 
 ## Variants
 
-A variant is a platform and a flavor, like `win-x64-mono-bdwgc`. The flavor is the scripting backend plus what varies inside it:
+A variant is a platform and a backend, like `win-x64-mono-bdwgc`. The backend is Unity's scripting backend plus what varies inside it:
 
-| Flavor | What it is | Editors |
+| Backend | What it is | Editors |
 |---|---|---|
 | `mono-legacy` | The old Mono runtime, `mono.dll` | before 2019.1 |
 | `mono-bdwgc` | The newer Mono runtime built with the Boehm collector, `mono-2.0-bdwgc.dll` | 2017.1 on |
 | `il2cpp-release` | IL2CPP with the Release C++ configuration | every editor with the module |
 | `il2cpp-master` | IL2CPP with the Master C++ configuration, which compiles the runtime differently, so a signature matched in one isn't matched in the other | 2018.3 on |
 
-The x86 variants need an editor that still ships a 32-bit player. The tool refuses a flavor the editor doesn't offer, and a variant given with `-p` or `-f` whose module isn't installed.
+The x86 variants need an editor that still ships a 32-bit player. The tool refuses a backend the editor doesn't offer, and a variant given with `-p` or `-b` whose module isn't installed.
 
 ## MSVC toolsets
 
@@ -100,7 +100,7 @@ The whole build, at the paths a shipped game uses: the executable, its data dire
 
 The tool fails instead of shipping an incomplete asset when a build lacks a binary its backend needs. Every build needs `UnityPlayer`, or the executable itself on players from before the engine was split out. Mono builds need `mono-2.0-bdwgc`, or `mono` on older editors. IL2CPP builds need `GameAssembly` and `global-metadata.dat`.
 
-The symbols come out of that backup directory: `GameAssembly.pdb` on Windows, `GameAssembly.debug` and `UnityPlayer_s.debug` on Linux. IL2CPP compiles the runtime's own structures into the game assembly, so those symbols say where the members of that build's structures sit. They roughly double an IL2CPP asset, but that is better than keeping them somewhere a build can drift away from.
+The symbols come out of that backup directory: `GameAssembly.pdb` on Windows, `GameAssembly.debug` and `UnityPlayer_s.debug` on Linux. IL2CPP compiles the runtime's own structures into the game assembly, so those symbols hold where the members of that build's structures sit. They roughly double an IL2CPP asset, but that is better than keeping them somewhere a build can drift away from.
 
 Mono builds have no symbols. The editor keeps a `mono-2.0-bdwgc.pdb` at its root and the `UnityPlayer` symbols under its player variations. Neither is attached to the copy a player ships, so you pair them by matching debug IDs, not paths.
 

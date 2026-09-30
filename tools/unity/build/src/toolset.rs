@@ -22,7 +22,7 @@ pub(crate) fn for_variant(
     project: &Path,
 ) -> Option<PathBuf> {
     let windows = matches!(variant.platform, Platform::WinX64 | Platform::WinX86);
-    if !windows || variant.flavor.is_mono() || major_minor(version) < (2021, 2) {
+    if !windows || variant.backend.is_mono() || major_minor(version) < (2021, 2) {
         return None;
     }
     let (tools, toolset) = toolset_shim(workspace);
@@ -105,7 +105,7 @@ const TOOLSET_CEILING: (u32, u32) = (14, 30);
 /// Makes a folder shaped like a Visual Studio install that holds only the
 /// newest toolset below 14.30, and answers the path `VS160COMNTOOLS` takes.
 /// Editors from 2021.2 on take the newest toolset of every install they
-/// find, so the one in this folder is named 14.99.0 to win. The build also
+/// find, so the one in this folder goes in as 14.99.0 to win. The build also
 /// asks the install for the C runtime it ships beside the player, so the
 /// redist goes in too, under the toolset's real version.
 fn toolset_shim(workspace: &Path) -> (PathBuf, PathBuf) {
