@@ -86,7 +86,7 @@ Every editor run keeps its log beside what it produced. The log opens with the c
 
 The editor does the building. The tool copies `editor/FixtureBuild.cs` into the project and runs it through `-executeMethod`.
 
-A fresh project gets `assets/` copied in once: the two scenes, the scripts and their `.meta` files, so every asset keeps the GUID it was written with. `FixtureBuild.Prepare` then turns on text serialization and turns off audio. The scenes were written by 5.6.7f1, and every later editor upgrades them when it imports them. If they ever need to change, `FixtureBuild.CreateScenes` writes them again from the oldest editor.
+A fresh project gets `assets/` copied in once: the two scenes, the scripts and their `.meta` files, so every asset keeps the GUID it was written with. `FixtureBuild.Prepare` then turns on text serialization and turns off audio. The scenes were written by 5.0.0f4, and every later editor upgrades them when it imports them. If they ever need to change, `FixtureBuild.CreateScenes` writes them again from the oldest editor.
 
 Switching the Mono runtime only takes effect in a fresh editor session, so on editors from 2017.1 through 2018.4 the tool runs the editor once to switch it and once more to build.
 
