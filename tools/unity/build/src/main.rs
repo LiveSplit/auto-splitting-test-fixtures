@@ -14,6 +14,7 @@ use clap::{Parser, ValueEnum};
 use sha2::{Digest, Sha256};
 use zip::{write::SimpleFileOptions, ZipWriter};
 
+mod modules;
 mod toolset;
 
 const RELEASES: &str =
@@ -363,6 +364,9 @@ fn main() {
         .or_else(|| version_from(&args.editor))
         .unwrap_or_else(|| fail("editor path names no version, pass --editor-version"));
 
+    // Variants given with -p or -f have to build. Without either, a variant
+    // whose module is missing is skipped with the reason.
+    let given = !args.platforms.is_empty() || !args.flavors.is_empty();
     let platforms = match args.platforms.is_empty() {
         true => Platform::value_variants().to_vec(),
         false => args.platforms,
@@ -378,11 +382,20 @@ fn main() {
     if let Some(flavor) = flavors.iter().find(|flavor| !flavor.offered_by(&version)) {
         fail(&format!("{version} can't build {}", name_of(*flavor)));
     }
-    let variants = platforms.iter().flat_map(|&platform| {
-        flavors
-            .iter()
-            .map(move |&flavor| Variant { platform, flavor })
-    });
+    let mut variants = Vec::new();
+    for &platform in &platforms {
+        for &flavor in &flavors {
+            let variant = Variant { platform, flavor };
+            match modules::missing(&args.editor, platform, flavor) {
+                None => variants.push(variant),
+                Some(reason) if given => fail(&format!("can't build {variant}: {reason}")),
+                Some(reason) => println!("skipping {variant}: {reason}"),
+            }
+        }
+    }
+    if variants.is_empty() {
+        fail("nothing to build: this editor has none of the modules the variants need");
+    }
 
     let workspace = args.out.join(&version);
     let project = workspace.join("project");
@@ -538,7 +551,7 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::{linker_version, Flavor};
+    use super::{linker_version, modules::has_players, Flavor, Platform};
 
     #[test]
     fn il2cpp_master_starts_at_2018_3() {
@@ -546,6 +559,26 @@ mod tests {
         assert!(!Flavor::Il2cppMaster.offered_by("2018.2.21f1"));
         assert!(Flavor::Il2cppMaster.offered_by("2018.3.0f2"));
         assert!(Flavor::Il2cppRelease.offered_by("2018.1.0f1"));
+    }
+
+    // Variations folders as the 2018.1.0f1 and 2022.2.0f1 editors ship them.
+    #[test]
+    fn players_are_found_by_their_variations_folder() {
+        let old = ["win32_nondevelopment_mono", "win64_nondevelopment_il2cpp"];
+        let new = [
+            "il2cpp",
+            "win64_player_nondevelopment_mono",
+            "linux64_player_nondevelopment_il2cpp",
+        ];
+        let old = old.map(String::from);
+        let new = new.map(String::from);
+        assert!(has_players(&old, Platform::WinX86, Flavor::MonoLegacy));
+        assert!(has_players(&old, Platform::WinX64, Flavor::Il2cppRelease));
+        assert!(!has_players(&old, Platform::WinX86, Flavor::Il2cppRelease));
+        assert!(has_players(&new, Platform::WinX64, Flavor::MonoBdwgc));
+        assert!(has_players(&new, Platform::LinuxX64, Flavor::Il2cppMaster));
+        assert!(!has_players(&new, Platform::LinuxX64, Flavor::MonoBdwgc));
+        assert!(!has_players(&new, Platform::WinX86, Flavor::MonoBdwgc));
     }
 
     #[test]
