@@ -4,7 +4,7 @@
 
 use std::{fs, path::Path};
 
-use crate::{Backend, Platform};
+use crate::{major_minor, Backend, Platform};
 
 /// Checks whether a list of player variations holds one for the platform
 /// and the backend.
@@ -37,9 +37,25 @@ fn module(platform: Platform, backend: Backend) -> &'static str {
 
 /// Returns why the editor can't build a variant, or none when it can.
 /// An editor laid out in a way this doesn't know is taken at its word.
-pub(crate) fn missing(editor: &Path, platform: Platform, backend: Backend) -> Option<String> {
+pub(crate) fn missing(
+    editor: &Path,
+    version: &str,
+    platform: Platform,
+    backend: Backend,
+) -> Option<String> {
     if platform == Platform::Mac && !backend.is_mono() && !cfg!(target_os = "macos") {
         return Some("Mac IL2CPP players only build on a Mac".into());
+    }
+    if platform == Platform::LinuxX64
+        && !backend.is_mono()
+        && !cfg!(target_os = "linux")
+        && major_minor(version) < (2022, 2)
+    {
+        return Some(
+            "Linux IL2CPP players build on this host only from Unity 2022.2 on, whose projects \
+             come with Unity's Linux toolchain package"
+                .into(),
+        );
     }
 
     let folder = match platform {

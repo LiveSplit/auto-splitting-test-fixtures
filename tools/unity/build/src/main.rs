@@ -406,7 +406,7 @@ fn main() {
     for &platform in &platforms {
         for &backend in &backends {
             let variant = Variant { platform, backend };
-            match modules::missing(&args.editor, platform, backend) {
+            match modules::missing(&args.editor, &version, platform, backend) {
                 None => variants.push(variant),
                 Some(reason) if given => fail(&format!("can't build {variant}: {reason}")),
                 Some(reason) => println!("skipping {variant}: {reason}"),
@@ -572,7 +572,23 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::{linker_version, modules::has_players, Backend, Platform};
+    use super::{
+        linker_version,
+        modules::{has_players, missing},
+        Backend, Platform,
+    };
+    use std::path::Path;
+
+    // Projects get Unity's Linux toolchain package from 2022.2 on, and a
+    // Windows host can't build Linux IL2CPP players without it.
+    #[cfg(windows)]
+    #[test]
+    fn linux_il2cpp_needs_2022_2_on_windows() {
+        let editor = Path::new("nowhere/Editor/Unity.exe");
+        let linux = |version| missing(editor, version, Platform::LinuxX64, Backend::Il2cppRelease);
+        assert!(linux("2021.2.20f1").is_some_and(|reason| reason.contains("2022.2")));
+        assert!(!linux("2022.2.0f1").is_some_and(|reason| reason.contains("2022.2")));
+    }
 
     #[test]
     fn il2cpp_master_starts_at_2018_3() {
