@@ -23,9 +23,13 @@ const RELEASES: &str =
 /// A platform a player is built for.
 #[derive(Copy, Clone, PartialEq, Eq, ValueEnum)]
 enum Platform {
+    /// Windows, 64-bit
     WinX64,
+    /// Windows, 32-bit. Needs an editor that still ships a 32-bit player
     WinX86,
+    /// Linux, 64-bit. Needs the Linux Build Support module
     LinuxX64,
+    /// macOS. Needs the Mac Build Support module
     Mac,
 }
 
@@ -50,9 +54,13 @@ impl Platform {
 /// anyone matching signatures in it.
 #[derive(Copy, Clone, PartialEq, Eq, ValueEnum)]
 enum Flavor {
+    /// The old Mono runtime, mono.dll. Editors before 2019.1
     MonoLegacy,
+    /// The Mono runtime built with the Boehm collector, mono-2.0-bdwgc.dll. Editors from 2017.1 on
     MonoBdwgc,
+    /// IL2CPP, Release C++ configuration. Needs the IL2CPP module for the platform
     Il2cppRelease,
+    /// IL2CPP, Master C++ configuration. Editors from 2018.3 on
     Il2cppMaster,
 }
 
@@ -322,26 +330,35 @@ fn version_from(editor: &Path) -> Option<String> {
 /// variant, whole, zipped and hashed, with the manifest entries printed to
 /// paste into manifest.json.
 #[derive(Parser)]
+#[command(after_help = "Examples:
+  Every variant the editor has modules for:
+    unity-fixtures -e C:/Unity/6000.5.10f1/Editor/Unity.exe -o D:/fixtures
+
+  4 players, every platform given with every flavor given:
+    unity-fixtures -e C:/Unity/6000.5.10f1/Editor/Unity.exe -o D:/fixtures -p win-x64 linux-x64 -f mono-bdwgc il2cpp-release")]
 struct Args {
-    /// Path to the editor binary
-    #[arg(short, long)]
+    /// Path to the editor binary: Editor/Unity.exe under a Hub install on
+    /// Windows, Editor/Unity on Linux, Unity.app/Contents/MacOS/Unity on macOS
+    #[arg(short, long, value_name = "PATH")]
     editor: PathBuf,
 
-    /// Workspace the projects and players build into
-    #[arg(short, long)]
+    /// Folder to build into. Each version gets its own folder inside, with
+    /// the project, the players, the assets and the logs
+    #[arg(short, long, value_name = "FOLDER")]
     out: PathBuf,
 
-    /// Editor version, when the editor path does not name it
-    #[arg(long)]
+    /// The editor version, such as 6000.5.10f1, for when the editor path
+    /// doesn't show it
+    #[arg(long, value_name = "VERSION")]
     editor_version: Option<String>,
 
-    /// Platforms to build for. Every platform without it, which needs
-    /// every module installed
-    #[arg(short, long = "platform", num_args = 1..)]
+    /// Platforms to build for. Without it, every platform the editor has the
+    /// module for
+    #[arg(short, long = "platform", num_args = 1.., value_name = "PLATFORM")]
     platforms: Vec<Platform>,
 
-    /// Flavors to build. Every flavor the editor offers without it
-    #[arg(short, long = "flavor", num_args = 1..)]
+    /// Flavors to build. Without it, every flavor the editor offers
+    #[arg(short, long = "flavor", num_args = 1.., value_name = "FLAVOR")]
     flavors: Vec<Flavor>,
 }
 
