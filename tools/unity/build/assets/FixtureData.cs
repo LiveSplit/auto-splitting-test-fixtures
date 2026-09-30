@@ -2,7 +2,9 @@
 // stays inside what every supported editor accepts.
 using System.Collections.Generic;
 using UnityEngine;
+#if UNITY_5_3_OR_NEWER
 using UnityEngine.SceneManagement;
+#endif
 
 /// <summary>
 ///     Holds the values unity-fixture.json describes. Everything is set once
@@ -52,7 +54,12 @@ public class FixtureData : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         // Loads a second scene so a reader sees more than one.
+#if UNITY_5_3_OR_NEWER
         SceneManager.LoadScene("Second", LoadSceneMode.Additive);
+#else
+        // SceneManager arrives in 5.3.
+        Application.LoadLevelAdditive("Second");
+#endif
     }
 }
 

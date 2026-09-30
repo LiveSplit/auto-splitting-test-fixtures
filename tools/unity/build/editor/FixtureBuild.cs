@@ -4,7 +4,9 @@
 using System;
 using System.IO;
 using UnityEditor;
+#if UNITY_5_3_OR_NEWER
 using UnityEditor.SceneManagement;
+#endif
 using UnityEngine;
 #if UNITY_2018_1_OR_NEWER
 using UnityEditor.Build.Reporting;
@@ -27,6 +29,9 @@ public static class FixtureBuild
         var variant = Variant.FromCommandLine();
 
         var target = EditorUserBuildSettings.activeBuildTarget;
+        string location = Path.Combine(outDir, PlayerName(target));
+
+#if UNITY_5_6_OR_NEWER
         var group = BuildPipeline.GetBuildTargetGroup(target);
         PlayerSettings.SetScriptingBackend(group, variant.Backend);
 
@@ -50,7 +55,7 @@ public static class FixtureBuild
         var options = new BuildPlayerOptions
         {
             scenes = Scenes(),
-            locationPathName = Path.Combine(outDir, PlayerName(target)),
+            locationPathName = location,
             target = target,
         };
 
@@ -59,6 +64,12 @@ public static class FixtureBuild
         EditorApplication.Exit(report.summary.result == BuildResult.Succeeded ? 0 : 1);
 #else
         string error = BuildPipeline.BuildPlayer(options);
+        EditorApplication.Exit(string.IsNullOrEmpty(error) ? 0 : 1);
+#endif
+#else
+        // Editors before 5.6 have no build options object and no backend
+        // setting for standalone players, which only build with Mono there.
+        string error = BuildPipeline.BuildPlayer(Scenes(), location, target, BuildOptions.None);
         EditorApplication.Exit(string.IsNullOrEmpty(error) ? 0 : 1);
 #endif
     }
@@ -118,11 +129,11 @@ public static class FixtureBuild
         EditorSettings.serializationMode = SerializationMode.ForceText;
         Directory.CreateDirectory(Path.GetDirectoryName(SecondScene));
 
-        var second = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        NewScene();
         new GameObject("SecondRoot");
-        EditorSceneManager.SaveScene(second, SecondScene);
+        SaveScene(SecondScene);
 
-        var boot = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        NewScene();
         new GameObject("Fixture").AddComponent<FixtureData>();
 
         var foo = new GameObject("Foo");
@@ -153,9 +164,29 @@ public static class FixtureBuild
         qux.transform.localRotation = new Quaternion(0.5f, 0.5f, 0.5f, 0.5f);
         qux.transform.localScale = new Vector3(2f, 4f, 8f);
 
-        EditorSceneManager.SaveScene(boot, BootScene);
+        SaveScene(BootScene);
         AssetDatabase.SaveAssets();
         EditorApplication.Exit(0);
+    }
+
+    // Opens an empty scene. Editors before 5.3 have no EditorSceneManager.
+    static void NewScene()
+    {
+#if UNITY_5_3_OR_NEWER
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+#else
+        EditorApplication.NewEmptyScene();
+#endif
+    }
+
+    // Saves the open scene at the path.
+    static void SaveScene(string path)
+    {
+#if UNITY_5_3_OR_NEWER
+        EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene(), path);
+#else
+        EditorApplication.SaveScene(path);
+#endif
     }
 
     // Turns audio off in the project settings, because there isn't a player
