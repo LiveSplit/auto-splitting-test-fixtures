@@ -218,8 +218,11 @@ public static class FixtureBuild
                 case "release":
                 case "master":
                     variant.Backend = ScriptingImplementation.IL2CPP;
-#if UNITY_2018_1_OR_NEWER
+#if UNITY_2018_3_OR_NEWER
                     variant.Configuration = flavor == "master" ? Il2CppCompilerConfiguration.Master : Il2CppCompilerConfiguration.Release;
+#elif UNITY_2018_1_OR_NEWER
+                    // 2018.1 and 2018.2 build IL2CPP at Release or Debug only.
+                    variant.Configuration = Il2CppCompilerConfiguration.Release;
 #endif
                     return variant;
                 default:
