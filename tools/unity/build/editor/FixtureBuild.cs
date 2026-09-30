@@ -39,6 +39,14 @@ public static class FixtureBuild
         }
 #endif
 
+#if UNITY_2018_1_OR_NEWER && !UNITY_2018_3_OR_NEWER
+        // The Windows Locale.cpp of 2018.1 and 2018.2 uses LC_ALL but doesn't
+        // include locale.h, so the compiler gets it included for every file.
+        // 2018.3 includes it itself.
+        PlayerSettings.SetAdditionalIl2CppArgs(
+            variant.Backend == ScriptingImplementation.IL2CPP ? "--compiler-flags=\"/FIlocale.h\"" : "");
+#endif
+
         var options = new BuildPlayerOptions
         {
             scenes = Scenes(),
