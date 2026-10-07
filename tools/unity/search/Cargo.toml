@@ -1,0 +1,12 @@
+[package]
+name = "unity-search"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+flate2 = "1"
+roxmltree = "0.21"
+serde_json = { version = "1", features = ["preserve_order"] }
+ureq = "3"
