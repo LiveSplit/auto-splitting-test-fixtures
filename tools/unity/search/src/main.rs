@@ -7,6 +7,7 @@ use std::{path::PathBuf, process};
 
 use clap::{Parser, Subcommand};
 
+mod il2cpp;
 mod package;
 mod releases;
 mod version;
@@ -21,7 +22,10 @@ mod version;
 
   The 64-bit Linux player of one release. A package holds one player per
   variation, so the path names the variation:
-    unity-search fetch 2018.2.0f1 linux -o D:/players linux64_withgfx_nondevelopment_mono/LinuxPlayer")]
+    unity-search fetch 2018.2.0f1 linux -o D:/players linux64_withgfx_nondevelopment_mono/LinuxPlayer
+
+  The IL2CPP layout of one release, as entries for asr's il2cpp/builds.rs:
+    unity-search il2cpp 2019.4.41f2 -w D:/work")]
 struct Args {
     #[command(subcommand)]
     command: Command,
@@ -40,15 +44,27 @@ enum Command {
         version: String,
         /// Which of the release's packages to read
         package: releases::Package,
-        /// Folder the files land in, by their file name
+        /// Folder the files land in, each at the path it was asked for
         #[arg(short, long, value_name = "FOLDER")]
         out: PathBuf,
         /// Ends of the paths inside the package to keep, such as
         /// libil2cpp/il2cpp-class-internals.h. The tool keeps the first
         /// entry that ends with a path. When a package holds the same file
-        /// name in several folders, put the folder in the path
+        /// name in several folders, put the folder in the path. A path
+        /// ending in / keeps every .h file under that folder
         #[arg(required = true, value_name = "PATH")]
         files: Vec<String>,
+    },
+    /// Measures the IL2CPP struct layout of one release from its editor's
+    /// libil2cpp headers, for x64 and x86, and prints both as entries for
+    /// asr's il2cpp/builds.rs
+    Il2cpp {
+        /// The release, such as 2019.4.41f2
+        version: String,
+        /// Folder for the headers and the probe. Each release gets its own
+        /// folder inside
+        #[arg(short, long, value_name = "FOLDER")]
+        work: PathBuf,
     },
 }
 
@@ -76,12 +92,41 @@ fn main() {
                 .unwrap_or_else(|| fail(&format!("{version} is not a release the API knows")));
             let url = releases::package_url(&record, package)
                 .unwrap_or_else(|| fail(&format!("{version} has no {package:?} package")));
-            let read = package::take(&url, &files, &out).unwrap_or_else(|e| fail(&e.to_string()));
+            let taken = package::take(&url, &files, &out).unwrap_or_else(|e| fail(&e.to_string()));
             println!(
                 "read {} MB of {}",
-                read / 1_000_000,
+                taken.read / 1_000_000,
                 url.rsplit('/').next().unwrap_or(&url)
             );
+            if let Some(missing) = taken.missing.first() {
+                fail(&format!("{missing} is not in the package"));
+            }
+        }
+        Command::Il2cpp { version, work } => {
+            let toolset = il2cpp::Toolset::find().unwrap_or_else(|e| fail(&e.to_string()));
+            let record = releases::record(&version)
+                .unwrap_or_else(|e| fail(&e.to_string()))
+                .unwrap_or_else(|| fail(&format!("{version} is not a release the API knows")));
+            let url = releases::package_url(&record, releases::Package::Editor)
+                .unwrap_or_else(|| fail(&format!("{version} has no editor package")));
+            let folder = work.join(&version);
+            // Every header of libil2cpp, since the struct header's includes
+            // grow over the releases, plus the version checks.
+            let files: Vec<String> = [il2cpp::HEADERS]
+                .iter()
+                .chain(il2cpp::VERSION_CHECKS)
+                .map(|f| f.to_string())
+                .collect();
+            package::take(&url, &files, &folder).unwrap_or_else(|e| fail(&e.to_string()));
+            let headers = folder.join(il2cpp::HEADERS);
+            if !headers.is_dir() {
+                fail(&format!("{version} has no libil2cpp folder in its editor"));
+            }
+            let metadata = il2cpp::metadata_version(&headers);
+            let (x64, x86) = il2cpp::measure(&toolset, &headers, &folder)
+                .unwrap_or_else(|e| fail(&e.to_string()));
+            println!("{}", il2cpp::entry(&version, metadata, 64, &x64));
+            println!("{}", il2cpp::entry(&version, metadata, 32, &x86));
         }
     }
 }
