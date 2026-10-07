@@ -10,6 +10,7 @@ use clap::{Parser, Subcommand};
 mod il2cpp;
 mod package;
 mod releases;
+mod search;
 mod version;
 
 #[derive(Parser)]
@@ -25,7 +26,10 @@ mod version;
     unity-search fetch 2018.2.0f1 linux -o D:/players linux64_withgfx_nondevelopment_mono/LinuxPlayer
 
   The IL2CPP layout of one release, as entries for asr's il2cpp/builds.rs:
-    unity-search il2cpp 2019.4.41f2 -w D:/work")]
+    unity-search il2cpp 2019.4.41f2 -w D:/work
+
+  Every release where the IL2CPP layout moves, across two minors:
+    unity-search search il2cpp 2019.4 2020.1 -w D:/work")]
 struct Args {
     #[command(subcommand)]
     command: Command,
@@ -66,6 +70,65 @@ enum Command {
         #[arg(short, long, value_name = "FOLDER")]
         work: PathBuf,
     },
+    /// Finds every release where a measurement moves, over the minors
+    /// given, measuring as few releases as a bisect needs. A release
+    /// measured once is kept as JSON in the work folder and never measured
+    /// again
+    Search {
+        /// What to measure on each release
+        what: Measurement,
+        /// The minors to search, such as 2019.4, oldest first
+        #[arg(required = true, value_name = "MINOR")]
+        minors: Vec<String>,
+        /// Folder for the headers, the probes and the measurements
+        #[arg(short, long, value_name = "FOLDER")]
+        work: PathBuf,
+    },
+}
+
+/// Measures one release's IL2CPP layout, or hands back the measurement
+/// kept from an earlier run. Returns `None` for a release whose editor has
+/// no libil2cpp or whose headers do not build.
+fn measure_il2cpp(
+    toolset: &il2cpp::Toolset,
+    version: &str,
+    work: &std::path::Path,
+) -> std::io::Result<Option<il2cpp::Measured>> {
+    let kept = work.join(format!("{version}.json"));
+    if let Ok(text) = std::fs::read_to_string(&kept) {
+        return Ok(serde_json::from_str(&text).ok());
+    }
+    let Some(record) = releases::record(version)? else {
+        return Ok(None);
+    };
+    let Some(url) = releases::package_url(&record, releases::Package::Editor) else {
+        return Ok(None);
+    };
+    let folder = work.join(version);
+    let files: Vec<String> = [il2cpp::HEADERS]
+        .iter()
+        .chain(il2cpp::VERSION_CHECKS)
+        .map(|f| f.to_string())
+        .collect();
+    package::take(&url, &files, &folder)?;
+    let headers = folder.join(il2cpp::HEADERS);
+    let measured = match headers.is_dir() {
+        true => il2cpp::measure(toolset, &headers, &folder).ok(),
+        false => None,
+    };
+    // The headers are only needed for the probe, and a sweep would keep
+    // hundreds of copies otherwise.
+    let _ = std::fs::remove_dir_all(&folder);
+    let value = serde_json::to_string_pretty(&measured).map_err(std::io::Error::other)?;
+    std::fs::write(&kept, value)?;
+    Ok(measured)
+}
+
+/// What a search measures on each release.
+#[derive(Clone, Copy, Debug, clap::ValueEnum)]
+enum Measurement {
+    /// The IL2CPP struct layout, from the editor's libil2cpp headers
+    Il2cpp,
 }
 
 fn fail(message: &str) -> ! {
@@ -104,29 +167,44 @@ fn main() {
         }
         Command::Il2cpp { version, work } => {
             let toolset = il2cpp::Toolset::find().unwrap_or_else(|e| fail(&e.to_string()));
-            let record = releases::record(&version)
+            let measured = measure_il2cpp(&toolset, &version, &work)
                 .unwrap_or_else(|e| fail(&e.to_string()))
-                .unwrap_or_else(|| fail(&format!("{version} is not a release the API knows")));
-            let url = releases::package_url(&record, releases::Package::Editor)
-                .unwrap_or_else(|| fail(&format!("{version} has no editor package")));
-            let folder = work.join(&version);
-            // Every header of libil2cpp, since the struct header's includes
-            // grow over the releases, plus the version checks.
-            let files: Vec<String> = [il2cpp::HEADERS]
-                .iter()
-                .chain(il2cpp::VERSION_CHECKS)
-                .map(|f| f.to_string())
-                .collect();
-            package::take(&url, &files, &folder).unwrap_or_else(|e| fail(&e.to_string()));
-            let headers = folder.join(il2cpp::HEADERS);
-            if !headers.is_dir() {
-                fail(&format!("{version} has no libil2cpp folder in its editor"));
+                .unwrap_or_else(|| fail(&format!("{version} has no IL2CPP headers that build")));
+            println!(
+                "{}",
+                il2cpp::entry(&version, measured.metadata, 64, &measured.x64)
+            );
+            println!(
+                "{}",
+                il2cpp::entry(&version, measured.metadata, 32, &measured.x86)
+            );
+        }
+        Command::Search { what, minors, work } => {
+            let Measurement::Il2cpp = what;
+            let toolset = il2cpp::Toolset::find().unwrap_or_else(|e| fail(&e.to_string()));
+            std::fs::create_dir_all(&work).unwrap_or_else(|e| fail(&e.to_string()));
+            let mut all = Vec::new();
+            let mut starts = Vec::new();
+            for minor in &minors {
+                let found = releases::of_minor(minor).unwrap_or_else(|e| fail(&e.to_string()));
+                println!("{minor}: {} releases", found.len());
+                starts.push(all.len());
+                all.extend(found);
             }
-            let metadata = il2cpp::metadata_version(&headers);
-            let (x64, x86) = il2cpp::measure(&toolset, &headers, &folder)
-                .unwrap_or_else(|e| fail(&e.to_string()));
-            println!("{}", il2cpp::entry(&version, metadata, 64, &x64));
-            println!("{}", il2cpp::entry(&version, metadata, 32, &x86));
+            let found = search::boundaries(
+                &all,
+                &starts,
+                |version| measure_il2cpp(&toolset, version, &work),
+                |version, what| println!("  {version:14} {what}"),
+            )
+            .unwrap_or_else(|e| fail(&e.to_string()));
+            println!("{} boundaries", found.len());
+            for boundary in &found {
+                println!(
+                    "  {} moves, {} does not",
+                    boundary.first_new, boundary.last_old
+                );
+            }
         }
     }
 }
