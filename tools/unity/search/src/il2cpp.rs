@@ -154,6 +154,38 @@ fn probe_source() -> String {
 /// One width's layout, member by member.
 pub(crate) type Layout = Vec<(String, u64)>;
 
+/// Both widths of one release, with the metadata version its runtime
+/// checks for. Two releases with the same `Measured` share a layout.
+#[derive(Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub(crate) struct Measured {
+    pub(crate) metadata: Option<u32>,
+    pub(crate) x64: Layout,
+    pub(crate) x86: Layout,
+}
+
+impl std::fmt::Display for Measured {
+    /// Shows the few members that tell layouts apart at a glance.
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let pick = |layout: &Layout, name: &str| {
+            layout
+                .iter()
+                .find(|(member, _)| member == name)
+                .map_or("?".to_string(), |(_, v)| format!("{v:#x}"))
+        };
+        write!(
+            f,
+            "metadata {} x64 size {} count {} statics {} / x86 size {} count {} statics {}",
+            self.metadata.map_or("?".to_string(), |m| m.to_string()),
+            pick(&self.x64, "Il2CppClass.instance_size"),
+            pick(&self.x64, "Il2CppClass.field_count"),
+            pick(&self.x64, "Il2CppClass.static_fields"),
+            pick(&self.x86, "Il2CppClass.instance_size"),
+            pick(&self.x86, "Il2CppClass.field_count"),
+            pick(&self.x86, "Il2CppClass.static_fields"),
+        )
+    }
+}
+
 /// Reads the probe's lines into member and offset pairs.
 fn parse(output: &str) -> Layout {
     output
@@ -166,18 +198,16 @@ fn parse(output: &str) -> Layout {
 }
 
 /// Measures both widths from headers in `headers`, writing the probe and its
-/// binaries into `work`. Returns the x64 and the x86 layouts.
-pub(crate) fn measure(
-    toolset: &Toolset,
-    headers: &Path,
-    work: &Path,
-) -> io::Result<(Layout, Layout)> {
+/// binaries into `work`.
+pub(crate) fn measure(toolset: &Toolset, headers: &Path, work: &Path) -> io::Result<Measured> {
     fs::create_dir_all(work)?;
     let source = work.join("layout.cpp");
     fs::write(&source, probe_source())?;
-    let x64 = parse(&toolset.run("x64", &source, headers)?);
-    let x86 = parse(&toolset.run("x86", &source, headers)?);
-    Ok((x64, x86))
+    Ok(Measured {
+        metadata: metadata_version(headers),
+        x64: parse(&toolset.run("x64", &source, headers)?),
+        x86: parse(&toolset.run("x86", &source, headers)?),
+    })
 }
 
 /// Prints one layout as an entry for asr's `il2cpp/builds.rs`, the way the
