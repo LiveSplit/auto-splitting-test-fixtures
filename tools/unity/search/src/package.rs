@@ -7,7 +7,7 @@
 use std::{
     fs, io,
     io::{Read, Write},
-    path::Path,
+    path::{Path, PathBuf},
     thread,
     time::Duration,
 };
@@ -204,37 +204,82 @@ pub(crate) fn pull(stream: &mut impl Read, entry: &Entry, dest: Option<&Path>) -
     Ok(())
 }
 
-/// Pulls the wanted files out of one package into `into`, each under its
-/// own file name. An entry matches a wanted path when the entry's path ends
-/// with it. Returns how many bytes of the package the stream read.
-pub(crate) fn take(url: &str, wanted: &[String], into: &Path) -> io::Result<u64> {
+/// Where a wanted file lands: the wanted path itself under `into`, so a
+/// header keeps the folders its includes name.
+fn destination(into: &Path, wanted: &str) -> PathBuf {
+    into.join(wanted.trim_start_matches('/'))
+}
+
+/// What one pass over a package found.
+pub(crate) struct Taken {
+    /// How many bytes of the package the stream read.
+    pub(crate) read: u64,
+    /// The wanted paths the package does not hold.
+    pub(crate) missing: Vec<String>,
+}
+
+/// Where an entry lands for a wanted folder, or `None` when the entry is
+/// not under it or is not a header. A wanted path ending in `/` names a
+/// folder, and every `.h` under it is wanted, at its path from the folder
+/// on.
+fn under(into: &Path, folder: &str, entry: &str) -> Option<PathBuf> {
+    let at = entry.find(folder)?;
+    let tail = &entry[at + folder.len()..];
+    (entry.ends_with(".h") && entry[..at].ends_with('/'))
+        .then(|| destination(into, &format!("{folder}{tail}")))
+}
+
+/// Pulls the wanted files out of one package into `into`, each at its
+/// wanted path. A wanted path ending in `/` is a folder, and every header
+/// under it is wanted too. A wanted path the package does not hold is
+/// reported, not an error, since older releases ship fewer files.
+pub(crate) fn take(url: &str, wanted: &[String], into: &Path) -> io::Result<Taken> {
     let (start, length) = payload_at(url)?;
-    let mut left: Vec<&String> = wanted.iter().collect();
-    let mut stream = GzDecoder::new(Resumable::new(url, start, start + length - 1)?);
-    while let Some(entry) = next_entry(&mut stream)? {
-        if left.is_empty() {
+    // The decoder asks for small reads, and each one would be a read on the
+    // socket without a buffer in between.
+    let range = Resumable::new(url, start, start + length - 1)?;
+    let buffered = io::BufReader::with_capacity(4 << 20, range);
+    let mut stream = GzDecoder::new(buffered);
+    let missing = take_from(&mut stream, wanted, into)?;
+    Ok(Taken {
+        read: stream.get_ref().get_ref().read,
+        missing,
+    })
+}
+
+/// Makes the pass of [`take`] over a decoded cpio stream and returns the
+/// wanted paths it never saw. The pass stops once every wanted file is out
+/// and the stream has left every wanted folder. A folder's entries sit
+/// together in the stream, so the first entry outside the folder means the
+/// folder is done.
+fn take_from(stream: &mut impl Read, wanted: &[String], into: &Path) -> io::Result<Vec<String>> {
+    let (folders, files): (Vec<&String>, Vec<&String>) =
+        wanted.iter().partition(|want| want.ends_with('/'));
+    let mut left = files;
+    let mut folders_left = folders.len();
+    let mut in_folder = false;
+    while let Some(entry) = next_entry(stream)? {
+        let folder_hit = folders
+            .iter()
+            .find(|folder| entry.name.contains(folder.as_str()));
+        if in_folder && folder_hit.is_none() {
+            folders_left -= 1;
+        }
+        in_folder = folder_hit.is_some();
+        if left.is_empty() && folders_left == 0 {
             break;
         }
-        let hit = left
+        let file_hit = left
             .iter()
             .position(|want| entry.name.ends_with(want.as_str()));
-        let dest = match hit {
-            Some(index) if entry.size > 0 => {
-                let want = left.remove(index);
-                let file = want.rsplit('/').next().unwrap_or(want);
-                Some(into.join(file))
-            }
+        let dest = match (file_hit, folder_hit, entry.size > 0) {
+            (Some(index), _, true) => Some(destination(into, left.remove(index))),
+            (None, Some(folder), true) => under(into, folder, &entry.name),
             _ => None,
         };
-        pull(&mut stream, &entry, dest.as_deref())?;
+        pull(stream, &entry, dest.as_deref())?;
     }
-    if let Some(missing) = left.first() {
-        return Err(io::Error::new(
-            io::ErrorKind::NotFound,
-            format!("{missing} is not in the package"),
-        ));
-    }
-    Ok(stream.get_ref().read)
+    Ok(left.into_iter().cloned().collect())
 }
 
 #[cfg(test)]
@@ -316,6 +361,66 @@ mod tests {
             out.push(0);
         }
         out
+    }
+
+    #[test]
+    fn a_folder_wants_every_header_under_it() {
+        let into = Path::new("out");
+        let want = "il2cpp/libil2cpp/";
+        assert_eq!(
+            under(into, want, "./Unity/Contents/il2cpp/libil2cpp/os/c-api/x.h"),
+            Some(into.join("il2cpp/libil2cpp/os/c-api/x.h"))
+        );
+        assert_eq!(
+            under(into, want, "./Unity/Contents/il2cpp/libil2cpp/a.cpp"),
+            None
+        );
+        assert_eq!(
+            under(into, want, "./Unity/Contents/xil2cpp/libil2cpp/a.h"),
+            None
+        );
+    }
+
+    // A folder with a file under it, then an entry past the folder. The pass
+    // stops at that entry, so the garbage after it is never read.
+    #[test]
+    fn the_pass_stops_once_it_leaves_the_last_wanted_folder() {
+        let stream = [
+            odc("./x/il2cpp/libil2cpp/a.h", b"A"),
+            odc("./x/il2cpp/libil2cpp/vm/C.cpp", b"C"),
+            odc("./x/il2cpp/libil2cpp/b.h", b"B"),
+            odc("./x/other/z.h", b"Z"),
+            b"garbage that is never reached".to_vec(),
+        ]
+        .concat();
+        let dir = std::env::temp_dir().join("unity-search-stop");
+        let _ = fs::remove_dir_all(&dir);
+        let wanted = [
+            "il2cpp/libil2cpp/".to_string(),
+            "il2cpp/libil2cpp/vm/C.cpp".to_string(),
+        ];
+        let missing = take_from(&mut io::Cursor::new(stream), &wanted, &dir).unwrap();
+        assert!(missing.is_empty());
+        assert_eq!(fs::read(dir.join("il2cpp/libil2cpp/a.h")).unwrap(), b"A");
+        assert_eq!(fs::read(dir.join("il2cpp/libil2cpp/b.h")).unwrap(), b"B");
+        assert_eq!(
+            fs::read(dir.join("il2cpp/libil2cpp/vm/C.cpp")).unwrap(),
+            b"C"
+        );
+        assert!(!dir.join("other").exists());
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn a_wanted_file_keeps_its_folders() {
+        assert_eq!(
+            destination(Path::new("out"), "libil2cpp/os/c-api/x.h"),
+            Path::new("out").join("libil2cpp/os/c-api/x.h")
+        );
+        assert_eq!(
+            destination(Path::new("out"), "/a.h"),
+            Path::new("out").join("a.h")
+        );
     }
 
     #[test]
