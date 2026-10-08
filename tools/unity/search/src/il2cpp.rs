@@ -155,12 +155,20 @@ fn probe_source() -> String {
 pub(crate) type Layout = Vec<(String, u64)>;
 
 /// Both widths of one release, with the metadata version its runtime
-/// checks for. Two releases with the same `Measured` share a layout.
-#[derive(Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+/// checks for. Two releases are equal when their layouts are. The metadata
+/// version is not part of that: asr never reads it, so a release that only
+/// bumps it is no boundary.
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub(crate) struct Measured {
     pub(crate) metadata: Option<u32>,
     pub(crate) x64: Layout,
     pub(crate) x86: Layout,
+}
+
+impl PartialEq for Measured {
+    fn eq(&self, other: &Self) -> bool {
+        self.x64 == other.x64 && self.x86 == other.x86
+    }
 }
 
 impl std::fmt::Display for Measured {
@@ -296,6 +304,28 @@ pub(crate) fn entry(version: &str, metadata: Option<u32>, width: u32, layout: &L
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn equal_when_only_metadata_differs() {
+        let layout = vec![("Il2CppClass.field_count".to_string(), 0x124)];
+        let a = Measured {
+            metadata: Some(29),
+            x64: layout.clone(),
+            x86: layout.clone(),
+        };
+        let b = Measured {
+            metadata: Some(31),
+            x64: layout.clone(),
+            x86: layout,
+        };
+        assert_eq!(a, b);
+        let c = Measured {
+            metadata: Some(31),
+            x64: vec![("Il2CppClass.field_count".to_string(), 0x120)],
+            x86: b.x86.clone(),
+        };
+        assert_ne!(b, c);
+    }
 
     #[test]
     fn the_metadata_version_comes_from_the_runtime_check() {
