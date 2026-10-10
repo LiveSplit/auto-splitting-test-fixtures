@@ -120,7 +120,7 @@ mod tests {
     }
 
     #[test]
-    fn the_editor_package_is_the_mac_pkg() {
+    fn editor_package_is_mac_pkg() {
         assert_eq!(
             package_url(&release(), Package::Editor).as_deref(),
             Some("https://x/Unity-2018.2.0f1.pkg")
@@ -140,7 +140,7 @@ mod tests {
     }
 
     #[test]
-    fn a_release_without_mac_downloads_has_no_packages() {
+    fn no_packages_without_mac_downloads() {
         let release = json!({"version": "x", "downloads": []});
         assert_eq!(package_url(&release, Package::Editor), None);
         assert_eq!(package_url(&release, Package::Linux), None);

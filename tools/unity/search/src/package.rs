@@ -306,7 +306,7 @@ mod tests {
     }
 
     #[test]
-    fn the_payload_offset_counts_from_the_end_of_the_table() {
+    fn payload_offset_counts_from_table_end() {
         let toc = "<xar><toc><file><name>Bom</name><data><offset>0</offset><length>5</length></data></file>\
                    <file><name>Payload</name><data><offset>100</offset><length>7</length></data></file></toc></xar>";
         let head = xar(toc);
@@ -318,7 +318,7 @@ mod tests {
     }
 
     #[test]
-    fn a_package_without_a_payload_is_an_error() {
+    fn error_without_payload() {
         let head = xar("<xar><toc><file><name>Bom</name></file></toc></xar>");
         assert!(payload_in_header(&head).is_err());
         assert!(payload_in_header(b"not xar").is_err());
@@ -364,7 +364,7 @@ mod tests {
     }
 
     #[test]
-    fn a_folder_wants_every_header_under_it() {
+    fn folder_wants_every_header_under_it() {
         let into = Path::new("out");
         let want = "il2cpp/libil2cpp/";
         assert_eq!(
@@ -384,7 +384,7 @@ mod tests {
     // A folder with a file under it, then an entry past the folder. The pass
     // stops at that entry, so the garbage after it is never read.
     #[test]
-    fn the_pass_stops_once_it_leaves_the_last_wanted_folder() {
+    fn stops_after_last_wanted_folder() {
         let stream = [
             odc("./x/il2cpp/libil2cpp/a.h", b"A"),
             odc("./x/il2cpp/libil2cpp/vm/C.cpp", b"C"),
@@ -412,7 +412,7 @@ mod tests {
     }
 
     #[test]
-    fn a_wanted_file_keeps_its_folders() {
+    fn wanted_file_keeps_its_folders() {
         assert_eq!(
             destination(Path::new("out"), "libil2cpp/os/c-api/x.h"),
             Path::new("out").join("libil2cpp/os/c-api/x.h")
@@ -424,7 +424,7 @@ mod tests {
     }
 
     #[test]
-    fn reads_odc_entries_up_to_the_trailer() {
+    fn reads_odc_entries_up_to_trailer() {
         let stream = [odc("./a/b.h", b"hello"), odc("TRAILER!!!", b"")].concat();
         let mut cursor = io::Cursor::new(stream);
         let entry = next_entry(&mut cursor).unwrap().unwrap();
