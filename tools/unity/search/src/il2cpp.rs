@@ -1,8 +1,10 @@
 //! Measures the IL2CPP struct layout of one release from the `libil2cpp`
 //! headers its editor ships. A small C++ program prints `offsetof` for every
-//! member asr reads, built with MSVC for x64 and for x86, so the numbers are
-//! the ones a Windows player's `GameAssembly.dll` has. The 6000.5.0f1
-//! numbers match that player's PDB on both widths.
+//! member asr reads. On Windows, MSVC builds it for x64 and for x86, so the
+//! numbers are the ones a Windows player's `GameAssembly.dll` has. The
+//! 6000.5.0f1 numbers match that player's PDB on both widths. On Linux,
+//! clang builds it for x64, so the numbers are the ones a Linux player's
+//! `GameAssembly.so` has.
 
 use std::{
     fs, io,
@@ -59,12 +61,20 @@ const MEMBERS: &[(&str, &str)] = &[
     ("FieldInfo", "offset"),
 ];
 
-/// Where MSVC and the Windows SDK sit. The toolset is pinned to 14.29, the
-/// one the fixture players are built with.
-pub(crate) struct Toolset {
-    msvc: PathBuf,
-    sdk_include: PathBuf,
-    sdk_lib: PathBuf,
+/// Holds the compiler that builds the probe. Windows uses MSVC, Linux uses
+/// clang.
+pub(crate) enum Toolset {
+    /// Builds the probe the way a Windows player's `GameAssembly.dll` is
+    /// built. MSVC is pinned to 14.29, the one the fixture players use.
+    Msvc {
+        msvc: PathBuf,
+        sdk_include: PathBuf,
+        sdk_lib: PathBuf,
+    },
+    /// Builds the probe the way a Linux player's `GameAssembly.so` is
+    /// built. Unity has no x86 IL2CPP player on Linux, so this builds x64
+    /// only.
+    Clang,
 }
 
 impl Toolset {
@@ -74,63 +84,127 @@ impl Toolset {
     const SDK_VERSION: &'static str = "10.0.26100.0";
 
     pub(crate) fn find() -> io::Result<Self> {
-        let toolset = Self {
-            msvc: PathBuf::from(Self::MSVC),
-            sdk_include: Path::new(Self::SDK).join("Include").join(Self::SDK_VERSION),
-            sdk_lib: Path::new(Self::SDK).join("Lib").join(Self::SDK_VERSION),
-        };
-        for path in [&toolset.msvc, &toolset.sdk_include] {
+        if cfg!(all(target_os = "linux", target_arch = "x86_64")) {
+            Command::new("clang++")
+                .arg("--version")
+                .output()
+                .map_err(|_| not_installed("clang++"))?;
+            return Ok(Self::Clang);
+        }
+        if !cfg!(windows) {
+            return Err(io::Error::new(
+                io::ErrorKind::Unsupported,
+                "measuring needs Windows or x86_64 Linux",
+            ));
+        }
+        let msvc = PathBuf::from(Self::MSVC);
+        let sdk_include = Path::new(Self::SDK).join("Include").join(Self::SDK_VERSION);
+        for path in [&msvc, &sdk_include] {
             if !path.is_dir() {
-                return Err(io::Error::new(
-                    io::ErrorKind::NotFound,
-                    format!("{} is not installed", path.display()),
-                ));
+                return Err(not_installed(&path.display().to_string()));
             }
         }
-        Ok(toolset)
+        Ok(Self::Msvc {
+            msvc,
+            sdk_include,
+            sdk_lib: Path::new(Self::SDK).join("Lib").join(Self::SDK_VERSION),
+        })
+    }
+
+    /// Tells whether this toolset builds an x86 probe too.
+    pub(crate) fn has_x86(&self) -> bool {
+        match self {
+            Self::Msvc { .. } => true,
+            Self::Clang => false,
+        }
+    }
+
+    /// Finds the file that keeps one release's result for this toolset.
+    /// Each toolset keeps its own, since a Linux result has no x86 layout
+    /// and a release can build on one OS and fail on the other.
+    pub(crate) fn kept(&self, work: &Path, version: &str) -> PathBuf {
+        match self {
+            Self::Msvc { .. } => work.join(format!("{version}.json")),
+            Self::Clang => work.join(format!("{version}.linux.json")),
+        }
+    }
+
+    /// Builds the command that compiles the probe for one width. The
+    /// compiler runs inside the probe's folder, so every path it gets is
+    /// absolute.
+    fn compile(&self, width: &str, source: &Path, headers: &Path) -> io::Result<Command> {
+        let source = &std::path::absolute(source)?;
+        let headers = &std::path::absolute(headers)?;
+        let exe = source.with_extension(format!("{width}.exe"));
+        let arg = |flag: &str, path: &Path| format!("{flag}{}", path.display());
+        let mut command;
+        match self {
+            Self::Msvc {
+                msvc,
+                sdk_include,
+                sdk_lib,
+            } => {
+                command = Command::new(msvc.join("bin").join("Hostx64").join(width).join("cl.exe"));
+                command
+                    .arg("/nologo")
+                    .arg(arg("/I", headers))
+                    .arg(arg("/I", &msvc.join("include")))
+                    .arg(arg("/I", &sdk_include.join("ucrt")))
+                    .arg(arg("/I", &sdk_include.join("shared")))
+                    .arg(arg("/I", &sdk_include.join("um")))
+                    .arg("/DRUNTIME_IL2CPP=1")
+                    .arg("/DIL2CPP_TARGET_WINDOWS_DESKTOP=1")
+                    .arg(arg("/Fo", &source.with_extension(format!("{width}.obj"))))
+                    .arg(arg("/Fe", &exe))
+                    .arg(source)
+                    .arg("/link")
+                    .arg(arg("/LIBPATH:", &msvc.join("lib").join(width)))
+                    .arg(arg("/LIBPATH:", &sdk_lib.join("ucrt").join(width)))
+                    .arg(arg("/LIBPATH:", &sdk_lib.join("um").join(width)));
+            }
+            Self::Clang => {
+                command = Command::new("clang++");
+                // Turns warnings off, since clang warns a lot about the
+                // headers and a failed build should show only its errors.
+                command
+                    .arg("-fms-extensions")
+                    .arg("-Wno-everything")
+                    .arg(arg("-I", headers))
+                    .arg("-DRUNTIME_IL2CPP=1")
+                    .arg("-DIL2CPP_TARGET_LINUX=1")
+                    .arg("-o")
+                    .arg(&exe)
+                    .arg(source);
+            }
+        }
+        command.current_dir(source.parent().unwrap_or(Path::new(".")));
+        Ok(command)
     }
 
     /// Builds and runs the probe for one width and returns what it printed.
     fn run(&self, width: &str, source: &Path, headers: &Path) -> io::Result<String> {
-        let exe = source.with_extension(format!("{width}.exe"));
-        let arg = |flag: &str, path: &Path| format!("{flag}{}", path.display());
-        let out = Command::new(
-            self.msvc
-                .join("bin")
-                .join("Hostx64")
-                .join(width)
-                .join("cl.exe"),
-        )
-        .current_dir(source.parent().unwrap_or(Path::new(".")))
-        .arg("/nologo")
-        .arg(arg("/I", headers))
-        .arg(arg("/I", &self.msvc.join("include")))
-        .arg(arg("/I", &self.sdk_include.join("ucrt")))
-        .arg(arg("/I", &self.sdk_include.join("shared")))
-        .arg(arg("/I", &self.sdk_include.join("um")))
-        .arg("/DRUNTIME_IL2CPP=1")
-        .arg("/DIL2CPP_TARGET_WINDOWS_DESKTOP=1")
-        .arg(arg("/Fo", &source.with_extension(format!("{width}.obj"))))
-        .arg(arg("/Fe", &exe))
-        .arg(source)
-        .arg("/link")
-        .arg(arg("/LIBPATH:", &self.msvc.join("lib").join(width)))
-        .arg(arg("/LIBPATH:", &self.sdk_lib.join("ucrt").join(width)))
-        .arg(arg("/LIBPATH:", &self.sdk_lib.join("um").join(width)))
-        .output()?;
+        let out = self.compile(width, source, headers)?.output()?;
         if !out.status.success() {
             return Err(io::Error::other(format!(
-                "cl.exe failed for {width}:\n{}",
-                String::from_utf8_lossy(&out.stdout)
+                "the probe failed to build for {width}:\n{}{}",
+                String::from_utf8_lossy(&out.stdout),
+                String::from_utf8_lossy(&out.stderr)
             )));
         }
-        let run = Command::new(&exe).output()?;
+        let exe = std::path::absolute(source.with_extension(format!("{width}.exe")))?;
+        let run = Command::new(exe).output()?;
         Ok(String::from_utf8_lossy(&run.stdout).into_owned())
     }
 }
 
+/// Makes the error for a compiler or SDK that is missing.
+fn not_installed(what: &str) -> io::Error {
+    io::Error::new(io::ErrorKind::NotFound, format!("{what} is not installed"))
+}
+
 /// The C++ source of the probe. A member a release does not have is skipped
-/// through `__if_exists`, which MSVC has for exactly this.
+/// through `__if_exists`, which MSVC has for exactly this and clang has
+/// with `-fms-extensions`.
 fn probe_source() -> String {
     let mut source = String::from(
         "#include <stddef.h>\n#include <stdio.h>\n#include <string.h>\n\
@@ -154,15 +228,15 @@ fn probe_source() -> String {
 /// One width's layout, member by member.
 pub(crate) type Layout = Vec<(String, u64)>;
 
-/// Both widths of one release, with the metadata version its runtime
-/// checks for. Two releases are equal when their layouts are. The metadata
-/// version is not part of that: asr never reads it, so a release that only
-/// bumps it is no boundary.
+/// The layouts of one release, with the metadata version its runtime checks
+/// for. `x86` is `None` when the toolset builds no x86 probe. Two releases
+/// are equal when their layouts are. The metadata version is not part of
+/// that: asr never reads it, so a release that only bumps it is no boundary.
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub(crate) struct Measured {
     pub(crate) metadata: Option<u32>,
     pub(crate) x64: Layout,
-    pub(crate) x86: Layout,
+    pub(crate) x86: Option<Layout>,
 }
 
 impl PartialEq for Measured {
@@ -180,17 +254,24 @@ impl std::fmt::Display for Measured {
                 .find(|(member, _)| member == name)
                 .map_or("?".to_string(), |(_, v)| format!("{v:#x}"))
         };
+        let show = |layout: &Layout| {
+            format!(
+                "size {} count {} statics {}",
+                pick(layout, "Il2CppClass.instance_size"),
+                pick(layout, "Il2CppClass.field_count"),
+                pick(layout, "Il2CppClass.static_fields"),
+            )
+        };
         write!(
             f,
-            "metadata {} x64 size {} count {} statics {} / x86 size {} count {} statics {}",
+            "metadata {} x64 {}",
             self.metadata.map_or("?".to_string(), |m| m.to_string()),
-            pick(&self.x64, "Il2CppClass.instance_size"),
-            pick(&self.x64, "Il2CppClass.field_count"),
-            pick(&self.x64, "Il2CppClass.static_fields"),
-            pick(&self.x86, "Il2CppClass.instance_size"),
-            pick(&self.x86, "Il2CppClass.field_count"),
-            pick(&self.x86, "Il2CppClass.static_fields"),
-        )
+            show(&self.x64),
+        )?;
+        if let Some(x86) = &self.x86 {
+            write!(f, " / x86 {}", show(x86))?;
+        }
+        Ok(())
     }
 }
 
@@ -205,16 +286,20 @@ fn parse(output: &str) -> Layout {
         .collect()
 }
 
-/// Measures both widths from headers in `headers`, writing the probe and its
-/// binaries into `work`.
+/// Measures every width the toolset builds from headers in `headers`,
+/// writing the probe and its binaries into `work`.
 pub(crate) fn measure(toolset: &Toolset, headers: &Path, work: &Path) -> io::Result<Measured> {
     fs::create_dir_all(work)?;
     let source = work.join("layout.cpp");
     fs::write(&source, probe_source())?;
+    let x86 = match toolset.has_x86() {
+        true => Some(parse(&toolset.run("x86", &source, headers)?)),
+        false => None,
+    };
     Ok(Measured {
         metadata: metadata_version(headers),
         x64: parse(&toolset.run("x64", &source, headers)?),
-        x86: parse(&toolset.run("x86", &source, headers)?),
+        x86,
     })
 }
 
@@ -311,12 +396,12 @@ mod tests {
         let a = Measured {
             metadata: Some(29),
             x64: layout.clone(),
-            x86: layout.clone(),
+            x86: Some(layout.clone()),
         };
         let b = Measured {
             metadata: Some(31),
             x64: layout.clone(),
-            x86: layout,
+            x86: Some(layout),
         };
         assert_eq!(a, b);
         let c = Measured {
@@ -325,6 +410,89 @@ mod tests {
             x86: b.x86.clone(),
         };
         assert_ne!(b, c);
+    }
+
+    #[test]
+    fn equal_when_neither_has_x86() {
+        let layout = vec![("Il2CppClass.field_count".to_string(), 0x124)];
+        let a = Measured {
+            metadata: Some(29),
+            x64: layout.clone(),
+            x86: None,
+        };
+        let b = Measured {
+            metadata: Some(31),
+            x64: layout,
+            x86: None,
+        };
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn unequal_when_only_one_has_x86() {
+        let layout = vec![("Il2CppClass.field_count".to_string(), 0x124)];
+        let windows = Measured {
+            metadata: Some(31),
+            x64: layout.clone(),
+            x86: Some(vec![("Il2CppClass.field_count".to_string(), 0xa4)]),
+        };
+        let linux = Measured {
+            metadata: Some(31),
+            x64: layout,
+            x86: None,
+        };
+        assert_ne!(windows, linux);
+    }
+
+    #[test]
+    fn old_result_with_x86_list_loads() {
+        let text = r#"{"metadata": 106, "x64": [["FieldInfo sizeof", 32]], "x86": [["FieldInfo sizeof", 20]]}"#;
+        let measured: Measured = serde_json::from_str(text).unwrap();
+        assert_eq!(
+            measured.x86,
+            Some(vec![("FieldInfo sizeof".to_string(), 20)])
+        );
+    }
+
+    #[test]
+    fn kept_result_file_differs_per_toolset() {
+        let msvc = Toolset::Msvc {
+            msvc: PathBuf::new(),
+            sdk_include: PathBuf::new(),
+            sdk_lib: PathBuf::new(),
+        };
+        let work = Path::new("work");
+        assert_eq!(msvc.kept(work, "6000.5.0f1"), work.join("6000.5.0f1.json"));
+        assert_eq!(
+            Toolset::Clang.kept(work, "6000.5.0f1"),
+            work.join("6000.5.0f1.linux.json")
+        );
+    }
+
+    #[test]
+    fn clang_builds_linux_probe_for_x64_only() {
+        let toolset = Toolset::Clang;
+        assert!(!toolset.has_x86());
+        let args = compile_args(&toolset);
+        assert!(args.iter().any(|arg| arg == "-DIL2CPP_TARGET_LINUX=1"));
+    }
+
+    #[test]
+    fn probe_paths_are_absolute() {
+        let args = compile_args(&Toolset::Clang);
+        let headers = args.iter().find_map(|arg| arg.strip_prefix("-I")).unwrap();
+        assert!(Path::new(headers).is_absolute());
+        let source = args.last().unwrap();
+        assert!(Path::new(source).is_absolute());
+    }
+
+    fn compile_args(toolset: &Toolset) -> Vec<String> {
+        toolset
+            .compile("x64", Path::new("work/layout.cpp"), Path::new("headers"))
+            .unwrap()
+            .get_args()
+            .map(|arg| arg.to_string_lossy().into_owned())
+            .collect()
     }
 
     #[test]
