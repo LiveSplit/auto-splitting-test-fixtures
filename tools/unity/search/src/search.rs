@@ -144,7 +144,7 @@ mod tests {
     }
 
     #[test]
-    fn a_minor_that_never_moves_costs_two_measurements() {
+    fn steady_minor_costs_two_measurements() {
         let (found, calls) = run(
             &[&["1.0.0f1", "1.0.1f1", "1.0.2f1", "1.0.3f1"]],
             &[
@@ -159,7 +159,7 @@ mod tests {
     }
 
     #[test]
-    fn a_move_inside_a_minor_is_found_between_its_neighbours() {
+    fn finds_move_inside_minor() {
         let (found, _) = run(
             &[&["1.0.0f1", "1.0.1f1", "1.0.2f1", "1.0.3f1", "1.0.4f1"]],
             &[
@@ -180,7 +180,7 @@ mod tests {
     }
 
     #[test]
-    fn a_move_between_minors_is_found_too() {
+    fn finds_move_between_minors() {
         let (found, calls) = run(
             &[&["1.0.0f1", "1.0.9f1"], &["1.1.0f1", "1.1.5f1"]],
             &[
@@ -201,7 +201,7 @@ mod tests {
     }
 
     #[test]
-    fn a_change_that_comes_back_gives_two_boundaries() {
+    fn reverted_change_gives_two_boundaries() {
         let (found, _) = run(
             &[&["1.0.0f1", "1.0.1f1", "1.0.2f1"], &["1.1.0f1"]],
             &[
@@ -217,7 +217,7 @@ mod tests {
     }
 
     #[test]
-    fn a_patch_that_cannot_be_measured_is_stepped_over() {
+    fn skips_patch_that_cannot_be_measured() {
         let (found, _) = run(
             &[&["1.0.0f1", "1.0.1f1", "1.0.2f1", "1.0.3f1"]],
             &[

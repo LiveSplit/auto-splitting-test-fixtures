@@ -496,7 +496,7 @@ mod tests {
     }
 
     #[test]
-    fn the_metadata_version_comes_from_the_runtime_check() {
+    fn metadata_version_comes_from_runtime_check() {
         let dir = std::env::temp_dir().join("unity-search-metadata");
         fs::create_dir_all(&dir).unwrap();
         fs::create_dir_all(dir.join("vm")).unwrap();
@@ -511,7 +511,7 @@ mod tests {
     }
 
     #[test]
-    fn the_probe_prints_every_member_once() {
+    fn probe_prints_every_member_once() {
         let source = probe_source();
         for (structure, member) in MEMBERS {
             assert_eq!(
@@ -523,7 +523,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_keeps_the_member_and_its_offset() {
+    fn parse_keeps_member_and_offset() {
         let layout = parse("Il2CppClass.name 16\nFieldInfo sizeof 32\nnoise\n");
         assert_eq!(
             layout,
@@ -535,7 +535,7 @@ mod tests {
     }
 
     #[test]
-    fn an_entry_takes_the_handle_when_there_is_no_inline_type_start() {
+    fn entry_takes_handle_without_inline_type_start() {
         let layout = vec![
             ("Il2CppImage.metadataHandle".to_string(), 0x28),
             ("Il2CppClass.field_count".to_string(), 0x124),
@@ -548,7 +548,7 @@ mod tests {
     }
 
     #[test]
-    fn an_entry_takes_the_inline_type_start_when_both_exist() {
+    fn entry_prefers_inline_type_start() {
         let layout = vec![
             ("Il2CppImage.typeStart".to_string(), 0x18),
             ("Il2CppImage.metadataHandle".to_string(), 0x28),
