@@ -60,8 +60,8 @@ enum Command {
         files: Vec<String>,
     },
     /// Measures the IL2CPP struct layout of one release from its editor's
-    /// libil2cpp headers, for x64 and x86, and prints both as entries for
-    /// asr's il2cpp/builds.rs
+    /// libil2cpp headers and prints it as entries for asr's
+    /// il2cpp/builds.rs. Windows measures x64 and x86, Linux measures x64
     Il2cpp {
         /// The release, such as 2019.4.41f2
         version: String,
@@ -94,7 +94,7 @@ fn measure_il2cpp(
     version: &str,
     work: &std::path::Path,
 ) -> std::io::Result<Option<il2cpp::Measured>> {
-    let kept = work.join(format!("{version}.json"));
+    let kept = toolset.kept(work, version);
     if let Ok(text) = std::fs::read_to_string(&kept) {
         return Ok(serde_json::from_str(&text).ok());
     }
@@ -174,10 +174,9 @@ fn main() {
                 "{}",
                 il2cpp::entry(&version, measured.metadata, 64, &measured.x64)
             );
-            println!(
-                "{}",
-                il2cpp::entry(&version, measured.metadata, 32, &measured.x86)
-            );
+            if let Some(x86) = &measured.x86 {
+                println!("{}", il2cpp::entry(&version, measured.metadata, 32, x86));
+            }
         }
         Command::Search { what, minors, work } => {
             let Measurement::Il2cpp = what;
